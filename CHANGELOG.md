@@ -22,3 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Profile-based `--config-dir /dev/null` injection for PLAIN mode
 - Shell script `--no-skip-permissions` flag
 - `/loop` note: accepts syntax in `-p` but session exits after first iteration
+- `artifact_parser.py` — session JSONL extraction, subagent tree reconstruction
+- `ToolUseEvent`, `SubagentNode`, `SessionArtifacts` Pydantic models
+- `parse_session()`, `extract_tool_uses()`, `find_session_jsonl()`, `find_subagents()` functions
+- CI workflow (`.github/workflows/ci.yaml`) — lint, type check, test on push/PR

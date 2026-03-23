@@ -24,12 +24,14 @@ version: 1.0.0
 - [x] `skip_permissions` field + `--dangerously-skip-permissions` support
 - [x] Shell script `--no-skip-permissions` flag
 - [x] `/loop` limitation documented (interactive-only, incompatible with `-p`)
+- [x] Artifact parser: `src/cc_recursive/artifact_parser.py` — session JSONL extraction, subagent tree reconstruction
+- [x] `ToolUseEvent`, `SubagentNode`, `SessionArtifacts` models
+- [x] CI: `.github/workflows/ci.yaml` — lint, type check, test on push/PR
+- [x] TDD test suite: 56 tests, 97%+ coverage
 
 ## Next
 
-- [ ] Session artifact parser: `src/cc_recursive/artifact_parser.py` — locate session JSONL, extract tool_use blocks, reconstruct subagent trees, extract task DAGs
 - [ ] Integration tests: end-to-end test invoking real `claude -p` with `CLAUDECODE=` cleared, asserting `RunResult` fields
-- [ ] CI: GitHub Actions workflow for lint, type check, unit tests
 
 ## Backlog
 

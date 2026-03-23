@@ -10,6 +10,8 @@ Example:
 from __future__ import annotations
 
 from enum import StrEnum
+from pathlib import Path
+from typing import Any
 
 from pydantic import BaseModel, Field
 
@@ -73,3 +75,57 @@ class RunResult(BaseModel):
     cost_usd: float = Field(ge=0.0, description="Estimated cost in USD")
     tool_calls: list[str] = Field(default_factory=list, description="Tool names invoked")
     raw_output: str = Field(default="", description="Raw stream-json stdout")
+
+
+class ToolUseEvent(BaseModel):
+    """A single tool invocation extracted from a CC session JSONL.
+
+    Attributes:
+        name: Tool name (e.g. "Read", "Bash", "Edit").
+        tool_use_id: CC-assigned tool call ID ("toolu_...").
+        input: Tool arguments as a dict.
+        timestamp: ISO 8601 timestamp from the outer JSONL record.
+    """
+
+    name: str = Field(description="Tool name")
+    tool_use_id: str = Field(description="Tool call ID")
+    input: dict[str, Any] = Field(default_factory=dict, description="Tool arguments")
+    timestamp: str = Field(default="", description="ISO 8601 timestamp")
+
+
+class SubagentNode(BaseModel):
+    """A node in the subagent invocation tree.
+
+    Attributes:
+        session_id: Session UUID from the JSONL sessionId field.
+        jsonl_path: Path to the subagent's JSONL file.
+        tool_uses: Tool invocations in this subagent's session.
+        children: Nested subagents spawned by this agent.
+    """
+
+    model_config = {"arbitrary_types_allowed": True}
+
+    session_id: str = Field(description="Session UUID")
+    jsonl_path: Path = Field(description="Path to JSONL file")
+    tool_uses: list[ToolUseEvent] = Field(default_factory=list)
+    children: list[SubagentNode] = Field(default_factory=list)
+
+
+class SessionArtifacts(BaseModel):
+    """Parsed artifacts from a CC session JSONL and its subagents.
+
+    Attributes:
+        session_id: Root session UUID.
+        jsonl_path: Path to the root session JSONL file.
+        tool_uses: Tool invocations in the root session.
+        subagents: Subagent tree nodes.
+        total_tool_calls: Total count across root + all subagents.
+    """
+
+    model_config = {"arbitrary_types_allowed": True}
+
+    session_id: str = Field(description="Root session UUID")
+    jsonl_path: Path = Field(description="Path to root JSONL file")
+    tool_uses: list[ToolUseEvent] = Field(default_factory=list)
+    subagents: list[SubagentNode] = Field(default_factory=list)
+    total_tool_calls: int = Field(ge=0, description="Total tool calls across all agents")

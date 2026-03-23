@@ -56,7 +56,7 @@ make validate      # lint + type_check + test_coverage
 - **Teams support**: Activates `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1` for parallel agent orchestration in subprocesses
 - **Timeout handling**: Terminates subprocesses cleanly when wall-clock timeout is exceeded (exit code 124)
 - **Env var filtering**: Passes only an explicit allowlist of env vars to child processes to prevent credential leakage
-- **Session artifact parsing**: Extracts tool_use blocks, subagent trees, and task DAGs from `~/.claude` JSONL files (planned)
+- **Session artifact parsing**: Extracts tool_use blocks and reconstructs subagent trees from `~/.claude` JSONL files
 
 ## Environment Variable Reference
 
@@ -76,7 +76,7 @@ CC's `/loop` command accepts syntax in `-p` mode but does not persist — the se
 
 ## Status
 
-**Phase 1 complete.** Core functionality: models, runner, shell script, run profiles (plain/enhanced), `--dangerously-skip-permissions`. 38 tests, 97% coverage.
+**Phase 3 complete.** Models, runner, shell script, run profiles, artifact parser, CI. 56 tests, 97%+ coverage.
 
 See [docs/TODO.md](docs/TODO.md) for the full task breakdown.
 

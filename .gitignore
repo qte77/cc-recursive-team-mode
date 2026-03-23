@@ -33,5 +33,8 @@ Thumbs.db
 # Hypothesis
 .hypothesis/
 
+# Pytest tmp artifacts
+pytest-of-*/
+
 # uv
 uv.lock

@@ -3,12 +3,21 @@
 Mock strategy: None — pure Pydantic model tests, no external I/O.
 """
 
+from pathlib import Path
+
 import pytest
 from hypothesis import given
 from hypothesis import strategies as st
 from pydantic import ValidationError
 
-from cc_recursive.models import RunConfig, RunProfile, RunResult
+from cc_recursive.models import (
+    RunConfig,
+    RunProfile,
+    RunResult,
+    SessionArtifacts,
+    SubagentNode,
+    ToolUseEvent,
+)
 
 
 class TestRunConfigDefaults:
@@ -125,6 +134,68 @@ class TestRunConfigProfileAndPermissions:
         """Can disable skip_permissions."""
         config = RunConfig(prompt="test", skip_permissions=False)
         assert config.skip_permissions is False
+
+
+class TestToolUseEvent:
+    """ToolUseEvent model construction."""
+
+    def test_tool_use_event_construction(self):
+        """All fields populated correctly."""
+        event = ToolUseEvent(
+            name="Read",
+            tool_use_id="toolu_abc123",
+            input={"file_path": "/src/main.py"},
+            timestamp="2026-03-23T12:00:00.000Z",
+        )
+        assert event.name == "Read"
+        assert event.tool_use_id == "toolu_abc123"
+        assert event.input == {"file_path": "/src/main.py"}
+
+
+class TestSubagentNode:
+    """SubagentNode recursive tree structure."""
+
+    def test_subagent_node_recursive(self):
+        """SubagentNode can contain children."""
+        child = SubagentNode(
+            session_id="child-uuid",
+            jsonl_path=Path("/tmp/child.jsonl"),
+            tool_uses=[],
+            children=[],
+        )
+        parent = SubagentNode(
+            session_id="parent-uuid",
+            jsonl_path=Path("/tmp/parent.jsonl"),
+            tool_uses=[],
+            children=[child],
+        )
+        assert len(parent.children) == 1
+        assert parent.children[0].session_id == "child-uuid"
+
+
+class TestSessionArtifacts:
+    """SessionArtifacts computed fields."""
+
+    def test_total_tool_calls_includes_subagents(self):
+        """total_tool_calls should count self + all subagent tool_uses recursively."""
+        child = SubagentNode(
+            session_id="child",
+            jsonl_path=Path("/tmp/c.jsonl"),
+            tool_uses=[
+                ToolUseEvent(name="Bash", tool_use_id="t2", input={}, timestamp="t"),
+            ],
+            children=[],
+        )
+        artifacts = SessionArtifacts(
+            session_id="main",
+            jsonl_path=Path("/tmp/m.jsonl"),
+            tool_uses=[
+                ToolUseEvent(name="Read", tool_use_id="t1", input={}, timestamp="t"),
+            ],
+            subagents=[child],
+            total_tool_calls=2,
+        )
+        assert artifacts.total_tool_calls == 2
 
 
 class TestRunConfigHypothesis:
