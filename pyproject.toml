@@ -1,0 +1,92 @@
+[project]
+version = "0.1.0"
+name = "cc-recursive-team-mode"
+description = "Recursive Claude Code subprocess spawning with CLAUDECODE guard management"
+authors = [
+    {name = "qte77", email = "qte@77.gh"}
+]
+readme = "README.md"
+requires-python = "==3.13.*"
+license = "mit"
+dependencies = [
+    "pydantic>=2.12.5",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/cc_recursive"]
+
+[dependency-groups]
+dev = [
+    "complexipy>=5.2.0",
+    "pyright>=1.1.408",
+    "ruff>=0.15.2",
+]
+test = [
+    "hypothesis>=6.151.9",
+    "pytest>=9.0.2",
+    "pytest-cov>=7.0.0",
+    "ruff>=0.15.2",
+]
+
+[tool.uv]
+package = true
+default-groups = ["dev", "test"]
+exclude-newer = "2026-03-23T00:00:00Z"
+
+
+# MARK: Testing and linting configurations
+
+
+[tool.pyright]
+pythonVersion = "3.13"
+include = ["src"]
+typeCheckingMode = "basic"
+reportMissingImports = true
+reportMissingTypeStubs = false
+
+[tool.ruff]
+target-version = "py313"
+src = ["src", "tests"]
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "W", "UP"]
+unfixable = ["B"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**/*.py" = ["E501"]
+
+[tool.ruff.format]
+docstring-code-format = true
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.pytest.ini_options]
+addopts = "--strict-markers"
+pythonpath = ["src"]
+testpaths = ["tests"]
+
+[tool.coverage.run]
+include = [
+    "src/**/*.py",
+]
+
+[tool.coverage.report]
+show_missing = true
+exclude_lines = [
+    'raise AssertionError',
+    'raise NotImplementedError',
+]
+omit = [
+    'env/*',
+    'venv/*',
+    '.venv/*',
+    '*/virtualenv/*',
+    '*/virtualenvs/*',
+    '*/tests/*',
+]

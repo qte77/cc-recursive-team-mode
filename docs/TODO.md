@@ -3,7 +3,7 @@ title: TODO - cc-recursive-team-mode
 description: Task tracker for recursive Claude Code subprocess spawning harness
 category: implementation
 created: 2026-03-22
-updated: 2026-03-22
+updated: 2026-03-23
 version: 1.0.0
 ---
 
@@ -13,23 +13,31 @@ version: 1.0.0
 
 - [x] Repository created
 - [x] Foundational docs: README, UserStory, architecture, TODO
+- [x] Project scaffold: pyproject.toml, Makefile, devcontainer, .gitignore, LICENSE.md, SECURITY.md
+- [x] GitHub templates: PR template, issue templates (bug report, question)
+- [x] Shell script: `scripts/cc-recursive-team.sh` — env clearing, flag parsing, stream-json capture
+- [x] Pydantic models: `src/cc_recursive/models.py` — `RunConfig` and `RunResult` with field validation
+- [x] Python wrapper: `src/cc_recursive/runner.py` — env allowlist, stream-json parsing, timeout (exit 124)
+- [x] Public API: `src/cc_recursive/__init__.py` — exports `run`, `RunConfig`, `RunResult`
+- [x] TDD test suite: 38 tests (97% coverage), Hypothesis property tests
+- [x] `RunProfile` enum: PLAIN (bare CC) vs ENHANCED (with .claude/ config)
+- [x] `skip_permissions` field + `--dangerously-skip-permissions` support
+- [x] Shell script `--no-skip-permissions` flag
+- [x] `/loop` limitation documented (interactive-only, incompatible with `-p`)
+- [x] Artifact parser: `src/cc_recursive/artifact_parser.py` — session JSONL extraction, subagent tree reconstruction
+- [x] `ToolUseEvent`, `SubagentNode`, `SessionArtifacts` models
+- [x] CI: `.github/workflows/ci.yaml` — lint, type check, test on push/PR
+- [x] TDD test suite: 56 tests, 97%+ coverage
 
 ## Next
 
-- [ ] Shell script: `scripts/cc-recursive-team.sh` — env clearing, subprocess invocation, stream-json capture, exit code forwarding
-- [ ] Python wrapper: `src/cc_recursive/runner.py` — `subprocess.run()` with env allowlist filtering, timeout enforcement, budget limit via stream-json monitoring
-- [ ] Pydantic models: `src/cc_recursive/models.py` — `RunConfig` and `RunResult` with full field definitions
-- [ ] Package init: `src/cc_recursive/__init__.py` — public API export (`run`, `RunConfig`, `RunResult`)
-- [ ] Unit tests for `RunConfig` validation and `RunResult` parsing from fixture stream-json
+- [ ] Integration tests: end-to-end test invoking real `claude -p` with `CLAUDECODE=` cleared, asserting `RunResult` fields
 
 ## Backlog
 
-- [ ] Session artifact parser: `src/cc_recursive/artifact_parser.py` — locate session JSONL, extract tool_use blocks, reconstruct subagent trees, extract task DAGs
-- [ ] Teams orchestration support: pass `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1` via `RunConfig.teams`, validate artifact collection in teams mode
+- [ ] Teams artifact validation: verify artifact collection works in teams mode
 - [ ] Depth control: detect and limit recursive spawn depth (guard against unbounded recursion)
-- [ ] Integration tests: end-to-end test invoking real `claude -p` with `CLAUDECODE=` cleared, asserting `RunResult` fields
-- [ ] CI: GitHub Actions workflow for lint, type check, unit tests
-- [ ] `pyproject.toml`, `Makefile` — project tooling setup (ruff, pyright, pytest)
+- [ ] `max_budget` mid-stream enforcement (requires streaming subprocess output)
 
 ## Deferred
 

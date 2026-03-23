@@ -1,56 +1,62 @@
 # cc-recursive-team-mode
 
-Recursive Claude Code subprocess spawning with CLAUDECODE guard management
+> Recursive Claude Code subprocess spawning with CLAUDECODE guard management
 
-## Problem
+## Why
 
-Claude Code sets `CLAUDECODE=1` in its process environment. Child `claude` processes inherit this variable and refuse to start, making recursive spawning impossible by default. Attempting to run `claude -p "prompt"` from within a CC session results in an immediate exit with an error.
+Claude Code sets `CLAUDECODE=1` to prevent accidental recursive spawning. This is a safety guard — but it also blocks legitimate use cases: evaluation harnesses, agent orchestration pipelines, and automated benchmarks that need to invoke `claude -p` as a subprocess from within a CC session.
 
-The fix is to clear the guard variable explicitly before invoking the child process:
-
-```bash
-CLAUDECODE= claude -p "prompt"
-```
-
-This harness provides a shell script and Python wrapper that automate guard clearing, capture structured stream-json output, and parse CC session artifacts for evaluation and orchestration use cases.
+This repo provides a shell script and Python wrapper that clear the guard, capture structured stream-json output, and return typed results. The repo itself serves as both the implementation **and** the test fixture — when CC runs `make validate` recursively on this codebase, the harness proves itself.
 
 ## Quick Start
 
-Clear the guard and invoke CC as a subprocess:
+### Shell
 
 ```bash
-# Minimal invocation — clears CLAUDECODE, runs in headless mode
-CLAUDECODE= claude -p "Summarize this repo in one sentence."
+# Clear the guard and invoke CC headless
+scripts/cc-recursive-team.sh --prompt "Summarize this repo." --max-turns 5
 
-# With teams mode and budget cap
-CLAUDECODE= CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1 \
-  claude -p "Analyze src/ for performance issues." \
-  --output-format stream-json \
-  --max-turns 10
+# With teams mode
+scripts/cc-recursive-team.sh --prompt "Analyze src/" --teams --timeout 120
 ```
 
-Using the Python wrapper (Phase 1):
+### Python
 
 ```python
-from cc_recursive.runner import run
+from cc_recursive import run, RunConfig, RunProfile
 
-result = run(
-    prompt="Write a test for src/main.py",
+# Plain-vanilla: bare CC, no skills/rules/CLAUDE.md
+result = run(RunConfig(prompt="Run make validate on this repo", timeout=120))
+
+# Enhanced: CC with full project config (.claude/, skills, rules)
+result = run(RunConfig(
+    prompt="Run make validate on this repo",
     timeout=120,
-    max_budget=0.50,
     teams=True,
-)
-print(result.cost_usd, result.tokens, result.tool_calls)
+    profile=RunProfile.ENHANCED,
+))
+print(f"exit={result.exit_code} tokens={result.tokens} cost=${result.cost_usd:.4f}")
+print(f"tools: {result.tool_calls}")
+```
+
+### Development
+
+```bash
+make setup_dev     # Install deps (uv + all groups)
+make test          # Run all tests (56 tests, 95% coverage)
+make validate      # lint + type_check + test_coverage
 ```
 
 ## Features
 
 - **Guard clearing**: Automatically unsets `CLAUDECODE` before spawning child processes
+- **Permission bypass**: `--dangerously-skip-permissions` by default for headless autonomous execution
+- **Run profiles**: `PLAIN` (bare CC, no .claude/ config) vs `ENHANCED` (with skills, rules, CLAUDE.md) for controlled A/B comparison
 - **stream-json parsing**: Parses CC stream-json output into a typed `RunResult` Pydantic model
 - **Teams support**: Activates `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1` for parallel agent orchestration in subprocesses
-- **Timeout and budget limits**: Terminates subprocesses cleanly when wall-clock or cost thresholds are exceeded
+- **Timeout handling**: Terminates subprocesses cleanly when wall-clock timeout is exceeded (exit code 124)
 - **Env var filtering**: Passes only an explicit allowlist of env vars to child processes to prevent credential leakage
-- **Session artifact parsing**: Extracts tool_use blocks, subagent trees, and task DAGs from `~/.claude` JSONL files
+- **Session artifact parsing**: Extracts tool_use blocks and reconstructs subagent trees from `~/.claude` JSONL files
 
 ## Environment Variable Reference
 
@@ -64,9 +70,13 @@ print(result.cost_usd, result.tokens, result.tool_calls)
 | `CLAUDE_CODE_DISABLE_1M_CONTEXT` | Prevents CC from using 1M-token context window in the subprocess. Reduces cost for small tasks. | unset |
 | `CLAUDE_CODE_EFFORT_LEVEL` | Controls reasoning effort in the subprocess (`low`, `medium`, `high`). | `high` |
 
+## Note on `/loop`
+
+CC's `/loop` command accepts syntax in `-p` mode but does not persist — the session exits after the first iteration, killing the cron scheduler. `/loop` requires a persistent interactive session for recurring execution.
+
 ## Status
 
-**Phase 0 — Documentation only.** No implementation code exists yet. Foundational docs (README, UserStory, architecture, TODO) are complete. Phase 1 implementation (shell script + Python wrapper + RunResult model) is next.
+**Phase 3 complete.** Models, runner, shell script, run profiles, artifact parser, CI. 56 tests, 97%+ coverage.
 
 See [docs/TODO.md](docs/TODO.md) for the full task breakdown.
 
