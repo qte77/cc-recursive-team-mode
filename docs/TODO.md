@@ -29,9 +29,13 @@ version: 1.0.0
 - [x] CI: `.github/workflows/ci.yaml` — lint, type check, test on push/PR
 - [x] TDD test suite: 56 tests, 97%+ coverage
 
+- [x] Integration tests: 7 real `claude -p` tests (PLAIN, ENHANCED, timeout, tokens/cost)
+- [x] Env denylist (replaced allowlist) — child inherits full parent env minus CLAUDECODE
+- [x] `--verbose` auto-added for stream-json in `-p` mode
+
 ## Next
 
-- [ ] Integration tests: end-to-end test invoking real `claude -p` with `CLAUDECODE=` cleared, asserting `RunResult` fields
+- [ ] Teams mode integration test (real `claude -p` with `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1`)
 
 ## Backlog
 

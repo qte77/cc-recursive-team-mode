@@ -1,6 +1,6 @@
 .SILENT:
 .ONESHELL:
-.PHONY: setup_dev lint type_check test test_coverage validate quick_validate help
+.PHONY: setup_dev lint type_check test test_coverage test_integration validate quick_validate help
 .DEFAULT_GOAL := help
 
 setup_dev:  ## Install all dev dependencies
@@ -19,6 +19,9 @@ test:  ## Run all tests
 
 test_coverage:  ## Run tests with coverage report
 	uv run pytest --cov
+
+test_integration:  ## Run integration tests (real claude -p, costs money)
+	uv run pytest -m integration -v
 
 validate:  ## Complete pre-commit validation: lint + type_check + test_coverage
 	set -e

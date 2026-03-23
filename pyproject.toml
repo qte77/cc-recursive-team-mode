@@ -67,9 +67,12 @@ docstring-code-format = true
 convention = "google"
 
 [tool.pytest.ini_options]
-addopts = "--strict-markers"
+addopts = "--strict-markers -m 'not integration'"
 pythonpath = ["src"]
 testpaths = ["tests"]
+markers = [
+    "integration: real claude -p invocation (requires API key + network)",
+]
 
 [tool.coverage.run]
 include = [

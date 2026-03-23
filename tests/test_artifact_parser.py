@@ -3,7 +3,6 @@
 Mock strategy: All tests use tmp_path fixtures. No real ~/.claude/ access.
 """
 
-
 from cc_recursive.artifact_parser import (
     extract_tool_uses,
     find_session_jsonl,

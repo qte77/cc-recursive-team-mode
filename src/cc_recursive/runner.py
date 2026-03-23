@@ -19,30 +19,17 @@ import subprocess
 import time
 from typing import Any
 
-from cc_recursive.models import RunConfig, RunProfile, RunResult
+from cc_recursive.models import RunConfig, RunResult
 
-# Reason: Allowlist prevents credential and token leakage.
-# Only these vars are passed to the child claude process.
-_CC_ENV_ALLOWLIST: frozenset[str] = frozenset(
-    {
-        "PATH",
-        "HOME",
-        "USER",
-        "TMPDIR",
-        "ANTHROPIC_API_KEY",
-        "CLAUDE_CODE_SUBAGENT_MODEL",
-        "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC",
-        "CLAUDE_CODE_DISABLE_GIT_INSTRUCTIONS",
-        "CLAUDE_CODE_DISABLE_1M_CONTEXT",
-        "CLAUDE_CODE_EFFORT_LEVEL",
-    }
-)
+# Reason: Denylist approach — child claude inherits parent env (same privilege level)
+# but CLAUDECODE must be removed for recursive spawning to work.
+_CC_ENV_DENYLIST: frozenset[str] = frozenset({"CLAUDECODE"})
 
 _TIMEOUT_EXIT_CODE = 124  # Matches bash `timeout` command convention
 
 
 def _build_env(config: RunConfig) -> dict[str, str]:
-    """Build the subprocess environment dict from config and allowlist.
+    """Build the subprocess environment dict from config.
 
     Args:
         config: RunConfig controlling env construction.
@@ -50,10 +37,11 @@ def _build_env(config: RunConfig) -> dict[str, str]:
     Returns:
         Clean env dict for the subprocess.
     """
-    env: dict[str, str] = {k: v for k, v in os.environ.items() if k in _CC_ENV_ALLOWLIST}
-    env.pop("CLAUDECODE", None)
+    env: dict[str, str] = {k: v for k, v in os.environ.items() if k not in _CC_ENV_DENYLIST}
     if config.teams:
         env["CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS"] = "1"
+    else:
+        env.pop("CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS", None)
     return env
 
 
@@ -109,9 +97,10 @@ def run(config: RunConfig) -> RunResult:
     if config.skip_permissions:
         cmd.append("--dangerously-skip-permissions")
     cmd.extend(["-p", config.prompt, "--output-format", config.output_format])
+    # Reason: stream-json requires --verbose in print mode
+    if config.output_format == "stream-json":
+        cmd.append("--verbose")
     cmd.extend(["--max-turns", str(config.max_turns)])
-    if config.profile == RunProfile.PLAIN:
-        cmd.extend(["--config-dir", "/dev/null"])
     env = _build_env(config)
 
     start = time.perf_counter()

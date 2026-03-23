@@ -26,3 +26,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `ToolUseEvent`, `SubagentNode`, `SessionArtifacts` Pydantic models
 - `parse_session()`, `extract_tool_uses()`, `find_session_jsonl()`, `find_subagents()` functions
 - CI workflow (`.github/workflows/ci.yaml`) — lint, type check, test on push/PR
+- Integration tests (`tests/test_integration.py`) — 7 real `claude -p` tests, excluded from `make test` by default
+- `make test_integration` recipe for explicit integration test execution
+- Env denylist approach (replaced allowlist) — child claude inherits full parent env minus CLAUDECODE
+- `--verbose` flag auto-added when `output_format == "stream-json"` (required by CC in `-p` mode)
+
+### Changed
+
+- Profile PLAIN no longer uses `--config-dir` or `--bare` — profile distinction is caller-controlled via working directory content
