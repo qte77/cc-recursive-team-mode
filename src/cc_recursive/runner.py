@@ -21,8 +21,11 @@ from typing import Any
 
 from cc_recursive.models import RunConfig, RunResult
 
-# Reason: Denylist approach — child claude inherits parent env (same privilege level)
-# but CLAUDECODE must be removed for recursive spawning to work.
+# Reason: Denylist (not allowlist) because claude's required env vars vary by
+# environment (Codespaces OAuth tokens, Node.js runtime, XDG paths, etc.) and
+# cannot be reliably enumerated. An allowlist was tried first but broke auth in
+# Codespaces. Since the child process has the same privilege level as the parent,
+# full env inheritance minus CLAUDECODE is safe.
 _CC_ENV_DENYLIST: frozenset[str] = frozenset({"CLAUDECODE"})
 
 _TIMEOUT_EXIT_CODE = 124  # Matches bash `timeout` command convention
