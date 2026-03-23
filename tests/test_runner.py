@@ -43,27 +43,15 @@ class TestRunEnvFiltering:
         env = mock_run.call_args[1]["env"]
         assert "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS" not in env
 
-    def test_run_env_excludes_non_allowlist_vars(self, sample_config, mock_subprocess_success):
-        """Given arbitrary env vars, should exclude non-allowlist vars."""
-        with patch.dict(os.environ, {"MY_SECRET_TOKEN": "hunter2"}):
+    def test_run_env_passes_through_non_denied_vars(self, sample_config, mock_subprocess_success):
+        """Given env vars not in denylist, should pass them through."""
+        with patch.dict(os.environ, {"MY_CUSTOM_VAR": "value123"}):
             with patch(
                 "cc_recursive.runner.subprocess.run", return_value=mock_subprocess_success
             ) as mock_run:
                 run(sample_config)
         env = mock_run.call_args[1]["env"]
-        assert "MY_SECRET_TOKEN" not in env
-
-    def test_run_env_includes_approved_claude_code_vars(
-        self, sample_config, mock_subprocess_success
-    ):
-        """Given approved CLAUDE_CODE_* vars, should pass them through."""
-        with patch.dict(os.environ, {"CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1"}):
-            with patch(
-                "cc_recursive.runner.subprocess.run", return_value=mock_subprocess_success
-            ) as mock_run:
-                run(sample_config)
-        env = mock_run.call_args[1]["env"]
-        assert env.get("CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC") == "1"
+        assert env.get("MY_CUSTOM_VAR") == "value123"
 
 
 class TestRunSubprocessArgs:
@@ -118,29 +106,28 @@ class TestRunPermissionsFlag:
 
 
 class TestRunProfileConfigDir:
-    """run() injects --config-dir based on profile."""
+    """run() profile distinction is caller-controlled (working directory), not CLI flags."""
 
-    def test_run_plain_profile_passes_null_config_dir(self, sample_config, mock_subprocess_success):
-        """Given PLAIN profile (default), cmd should contain --config-dir /dev/null."""
+    def test_run_plain_and_enhanced_produce_same_cmd_base(
+        self, sample_config, sample_config_enhanced, mock_subprocess_success
+    ):
+        """PLAIN and ENHANCED should produce the same base command (no profile-specific flags)."""
         with patch(
             "cc_recursive.runner.subprocess.run", return_value=mock_subprocess_success
         ) as mock_run:
             run(sample_config)
-        cmd = mock_run.call_args[0][0]
-        assert "--config-dir" in cmd
-        config_dir_idx = cmd.index("--config-dir")
-        assert cmd[config_dir_idx + 1] == "/dev/null"
+        cmd_plain = mock_run.call_args[0][0]
 
-    def test_run_enhanced_profile_no_config_dir_flag(
-        self, sample_config_enhanced, mock_subprocess_success
-    ):
-        """Given ENHANCED profile, cmd should NOT contain --config-dir."""
         with patch(
             "cc_recursive.runner.subprocess.run", return_value=mock_subprocess_success
         ) as mock_run:
             run(sample_config_enhanced)
-        cmd = mock_run.call_args[0][0]
-        assert "--config-dir" not in cmd
+        cmd_enhanced = mock_run.call_args[0][0]
+
+        # Both should have same structure (only prompt differs)
+        assert cmd_plain[0] == cmd_enhanced[0] == "claude"
+        assert "--dangerously-skip-permissions" in cmd_plain
+        assert "--dangerously-skip-permissions" in cmd_enhanced
 
 
 class TestRunOutputParsing:
