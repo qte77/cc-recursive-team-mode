@@ -43,7 +43,7 @@ print(f"tools: {result.tool_calls}")
 
 ```bash
 make setup_dev     # Install deps (uv + all groups)
-make test          # Run all tests (38 tests, 97% coverage)
+make test          # Run all tests (56 tests, 95% coverage)
 make validate      # lint + type_check + test_coverage
 ```
 
