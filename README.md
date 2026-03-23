@@ -1,46 +1,45 @@
 # cc-recursive-team-mode
 
-Recursive Claude Code subprocess spawning with CLAUDECODE guard management
+> Recursive Claude Code subprocess spawning with CLAUDECODE guard management
 
-## Problem
+## Why
 
-Claude Code sets `CLAUDECODE=1` in its process environment. Child `claude` processes inherit this variable and refuse to start, making recursive spawning impossible by default. Attempting to run `claude -p "prompt"` from within a CC session results in an immediate exit with an error.
+Claude Code sets `CLAUDECODE=1` to prevent accidental recursive spawning. This is a safety guard — but it also blocks legitimate use cases: evaluation harnesses, agent orchestration pipelines, and automated benchmarks that need to invoke `claude -p` as a subprocess from within a CC session.
 
-The fix is to clear the guard variable explicitly before invoking the child process:
-
-```bash
-CLAUDECODE= claude -p "prompt"
-```
-
-This harness provides a shell script and Python wrapper that automate guard clearing, capture structured stream-json output, and parse CC session artifacts for evaluation and orchestration use cases.
+This repo provides a shell script and Python wrapper that clear the guard, capture structured stream-json output, and return typed results. The repo itself serves as both the implementation **and** the test fixture — when CC runs `make validate` recursively on this codebase, the harness proves itself.
 
 ## Quick Start
 
-Clear the guard and invoke CC as a subprocess:
+### Shell
 
 ```bash
-# Minimal invocation — clears CLAUDECODE, runs in headless mode
-CLAUDECODE= claude -p "Summarize this repo in one sentence."
+# Clear the guard and invoke CC headless
+scripts/cc-recursive-team.sh --prompt "Summarize this repo." --max-turns 5
 
-# With teams mode and budget cap
-CLAUDECODE= CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1 \
-  claude -p "Analyze src/ for performance issues." \
-  --output-format stream-json \
-  --max-turns 10
+# With teams mode
+scripts/cc-recursive-team.sh --prompt "Analyze src/" --teams --timeout 120
 ```
 
-Using the Python wrapper (Phase 1):
+### Python
 
 ```python
-from cc_recursive.runner import run
+from cc_recursive import run, RunConfig
 
-result = run(
-    prompt="Write a test for src/main.py",
+result = run(RunConfig(
+    prompt="Run make validate on this repo",
     timeout=120,
-    max_budget=0.50,
     teams=True,
-)
-print(result.cost_usd, result.tokens, result.tool_calls)
+))
+print(f"exit={result.exit_code} tokens={result.tokens} cost=${result.cost_usd:.4f}")
+print(f"tools: {result.tool_calls}")
+```
+
+### Development
+
+```bash
+make setup_dev     # Install deps (uv + all groups)
+make test          # Run all tests (27 tests, 96% coverage)
+make validate      # lint + type_check + test_coverage
 ```
 
 ## Features
@@ -66,7 +65,7 @@ print(result.cost_usd, result.tokens, result.tool_calls)
 
 ## Status
 
-**Phase 0 — Documentation only.** No implementation code exists yet. Foundational docs (README, UserStory, architecture, TODO) are complete. Phase 1 implementation (shell script + Python wrapper + RunResult model) is next.
+**Phase 1 — Shell script + Python wrapper + models.** Core functionality implemented with TDD (27 tests, 96% coverage). Artifact parser deferred to Phase 2.
 
 See [docs/TODO.md](docs/TODO.md) for the full task breakdown.
 

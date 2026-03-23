@@ -1,0 +1,37 @@
+# Python bytecode
+__pycache__/
+*.py[cod]
+
+# Environment
+.venv/
+*.env
+unset_env.sh
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
+
+# Testing
+.pytest_cache/
+.coverage/
+.coverage
+
+# Logs
+*.log
+logs/
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Sanity
+.ruff_cache/
+.mypy_cache/
+.complexipy_cache
+
+# Hypothesis
+.hypothesis/
+
+# uv
+uv.lock

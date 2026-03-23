@@ -1,0 +1,30 @@
+{
+  "name": "cc-recursive-team-mode",
+  "image": "mcr.microsoft.com/vscode/devcontainers/python:3.13",
+  "features": {
+    "ghcr.io/devcontainers/features/node:1": {}
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "anthropic.claude-code",
+        "charliermarsh.ruff",
+        "editorconfig.editorconfig",
+        "ms-python.python",
+        "ms-python.vscode-pylance",
+        "ms-vscode.makefile-tools",
+        "tamasfe.even-better-toml"
+      ],
+      "settings": {
+        "dotfiles.repository": "qte77/dotfiles",
+        "dotfiles.installCommand": "install.sh",
+        "python.defaultInterpreterPath": "./.venv/bin/python",
+        "makefile.configureOnOpen": false
+      }
+    }
+  },
+  "containerEnv": {
+    "UV_LINK_MODE": "copy"
+  },
+  "postCreateCommand": "make setup_dev"
+}
