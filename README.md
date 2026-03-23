@@ -43,8 +43,9 @@ print(f"tools: {result.tool_calls}")
 
 ```bash
 make setup_dev     # Install deps (uv + all groups)
-make test          # Run all tests (56 tests, 95% coverage)
-make validate      # lint + type_check + test_coverage
+make test              # Unit tests (54 tests, 95% coverage)
+make test_integration  # Integration tests (7 tests, real claude -p)
+make validate          # lint + type_check + test_coverage
 ```
 
 ## Features
@@ -76,7 +77,7 @@ CC's `/loop` command accepts syntax in `-p` mode but does not persist — the se
 
 ## Status
 
-**Phase 3 complete.** Models, runner, shell script, run profiles, artifact parser, CI. 56 tests, 97%+ coverage.
+**Phase 4 complete.** Models, runner, shell script, run profiles, artifact parser, CI, integration tests. 54 unit + 7 integration tests, 95% coverage.
 
 See [docs/TODO.md](docs/TODO.md) for the full task breakdown.
 

@@ -22,6 +22,7 @@ The design is intentionally minimal — a shell primitive for direct invocation 
 Handles env clearing, subprocess lifecycle, and raw stream-json capture.
 
 Responsibilities:
+
 - Unset `CLAUDECODE` before invoking `claude -p`
 - Optionally set `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1` for teams mode
 - Pass `--output-format stream-json` and `--max-turns` flags
@@ -33,7 +34,8 @@ Responsibilities:
 Provides a `run()` function that invokes the shell primitive via `subprocess.run()` with env filtering and returns a typed `RunResult`.
 
 Responsibilities:
-- Build the subprocess env from an explicit allowlist (prevents credential leakage)
+
+- Build the subprocess env via denylist (inherit parent env minus CLAUDECODE)
 - Enforce `timeout` limit (exit code 124 on breach); `max_budget` modeled but not yet enforced
 - Parse stream-json lines from stdout into `RunResult`
 - Expose a synchronous `run(config: RunConfig) -> RunResult` interface
@@ -67,6 +69,7 @@ Responsibilities:
 Parses `~/.claude` JSONL session files produced during subprocess execution.
 
 Responsibilities:
+
 - Locate the most recent session file written during a run window
 - Extract `tool_use` blocks with inputs, outputs, and timestamps
 - Reconstruct subagent invocation trees (parent/child relationships)
@@ -74,7 +77,7 @@ Responsibilities:
 
 ## Data Flow
 
-```
+```text
 caller → RunConfig → runner.py → subprocess(CLAUDECODE= claude -p ...) → stream-json → RunResult
                                                                       |
                                                             ~/.claude/ JSONL → artifact_parser.py → traces
@@ -94,7 +97,7 @@ caller → RunConfig → runner.py → subprocess(CLAUDECODE= claude -p ...) →
 
 ## Directory Structure
 
-```
+```text
 cc-recursive-team-mode/
 ├── scripts/
 │   └── cc-recursive-team.sh
@@ -116,8 +119,12 @@ cc-recursive-team-mode/
 
 **Shell primitive first, Python wrapper second.** The shell script is the minimal reproducible proof that recursive spawning works. The Python wrapper adds structure on top of a known-working primitive — not the other way around.
 
-**Env allowlist, not blocklist.** Passing only explicitly approved env vars to child processes prevents accidental credential or token leakage. Unknown vars are excluded by default.
+**Env denylist, not allowlist.** Child claude process inherits the parent's full environment minus `CLAUDECODE`. An allowlist approach was tried first but proved too restrictive — claude requires Node.js runtime vars, Codespaces auth tokens, XDG vars, etc. that vary by environment. Since the child has the same privilege level as the parent, full env inheritance is safe.
 
-**No CC source modifications.** All behavior is achieved through env var manipulation. This keeps the harness compatible with future CC versions without requiring patches.
+**No CC source modifications.** All behavior is achieved through env var manipulation and CLI flags. This keeps the harness compatible with future CC versions without requiring patches.
 
-**stream-json required.** The `--output-format stream-json` flag is the only CC output format that provides structured per-event data (tokens, cost, tool calls). Text and JSON formats lack the metadata needed for `RunResult`.
+**stream-json requires `--verbose`.** In `-p` (print) mode, `--output-format stream-json` requires the `--verbose` flag or claude exits with an error. The runner adds `--verbose` automatically when `output_format == "stream-json"`.
+
+**PLAIN profile uses `--setting-sources user`.** The `--bare` flag was considered for PLAIN profile but it disables OAuth/keychain auth, breaking Codespaces environments. `--setting-sources user` loads user settings (including auth) but skips project-level `.claude/` config (skills, rules, CLAUDE.md), achieving the desired A/B separation without auth breakage.
+
+**`/loop` is single-shot in `-p` mode.** `/loop` accepts syntax in `-p` mode but the session exits after the first iteration, killing the cron scheduler. Recurring execution requires a persistent interactive session or an external loop.
