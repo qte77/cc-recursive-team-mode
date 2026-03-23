@@ -76,7 +76,7 @@ CC's `/loop` command accepts syntax in `-p` mode but does not persist — the se
 
 ## Status
 
-**Phase 1 complete.** Core functionality: models, runner, shell script, run profiles (plain/enhanced), `--dangerously-skip-permissions`. TDD test suite with 37+ tests.
+**Phase 1 complete.** Core functionality: models, runner, shell script, run profiles (plain/enhanced), `--dangerously-skip-permissions`. 38 tests, 97% coverage.
 
 See [docs/TODO.md](docs/TODO.md) for the full task breakdown.
 
