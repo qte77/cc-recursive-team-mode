@@ -22,6 +22,7 @@ The design is intentionally minimal — a shell primitive for direct invocation 
 Handles env clearing, subprocess lifecycle, and raw stream-json capture.
 
 Responsibilities:
+
 - Unset `CLAUDECODE` before invoking `claude -p`
 - Optionally set `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1` for teams mode
 - Pass `--output-format stream-json` and `--max-turns` flags
@@ -33,6 +34,7 @@ Responsibilities:
 Provides a `run()` function that invokes the shell primitive via `subprocess.run()` with env filtering and returns a typed `RunResult`.
 
 Responsibilities:
+
 - Build the subprocess env from an explicit allowlist (prevents credential leakage)
 - Enforce `timeout` limit (exit code 124 on breach); `max_budget` modeled but not yet enforced
 - Parse stream-json lines from stdout into `RunResult`
@@ -67,6 +69,7 @@ Responsibilities:
 Parses `~/.claude` JSONL session files produced during subprocess execution.
 
 Responsibilities:
+
 - Locate the most recent session file written during a run window
 - Extract `tool_use` blocks with inputs, outputs, and timestamps
 - Reconstruct subagent invocation trees (parent/child relationships)
@@ -74,7 +77,7 @@ Responsibilities:
 
 ## Data Flow
 
-```
+```text
 caller → RunConfig → runner.py → subprocess(CLAUDECODE= claude -p ...) → stream-json → RunResult
                                                                       |
                                                             ~/.claude/ JSONL → artifact_parser.py → traces
@@ -94,7 +97,7 @@ caller → RunConfig → runner.py → subprocess(CLAUDECODE= claude -p ...) →
 
 ## Directory Structure
 
-```
+```text
 cc-recursive-team-mode/
 ├── scripts/
 │   └── cc-recursive-team.sh
