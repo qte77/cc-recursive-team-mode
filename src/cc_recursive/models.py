@@ -9,7 +9,21 @@ Example:
 
 from __future__ import annotations
 
+from enum import StrEnum
+
 from pydantic import BaseModel, Field
+
+
+class RunProfile(StrEnum):
+    """CC execution profile controlling skills/rules/CLAUDE.md injection.
+
+    Attributes:
+        PLAIN: No .claude/, no CLAUDE.md — bare CC without agentic scaffolding.
+        ENHANCED: Full project config: .claude/, skills, rules, CLAUDE.md.
+    """
+
+    PLAIN = "plain"
+    ENHANCED = "enhanced"
 
 
 class RunConfig(BaseModel):
@@ -32,6 +46,13 @@ class RunConfig(BaseModel):
     )
     teams: bool = Field(default=False, description="Enable CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS")
     output_format: str = Field(default="stream-json", description="CC --output-format flag")
+    skip_permissions: bool = Field(
+        default=True, description="Pass --dangerously-skip-permissions for headless execution"
+    )
+    profile: RunProfile = Field(
+        default=RunProfile.PLAIN,
+        description="CC config profile: plain (bare) or enhanced (with .claude/)",
+    )
 
 
 class RunResult(BaseModel):

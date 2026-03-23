@@ -23,12 +23,17 @@ scripts/cc-recursive-team.sh --prompt "Analyze src/" --teams --timeout 120
 ### Python
 
 ```python
-from cc_recursive import run, RunConfig
+from cc_recursive import run, RunConfig, RunProfile
 
+# Plain-vanilla: bare CC, no skills/rules/CLAUDE.md
+result = run(RunConfig(prompt="Run make validate on this repo", timeout=120))
+
+# Enhanced: CC with full project config (.claude/, skills, rules)
 result = run(RunConfig(
     prompt="Run make validate on this repo",
     timeout=120,
     teams=True,
+    profile=RunProfile.ENHANCED,
 ))
 print(f"exit={result.exit_code} tokens={result.tokens} cost=${result.cost_usd:.4f}")
 print(f"tools: {result.tool_calls}")
@@ -45,11 +50,13 @@ make validate      # lint + type_check + test_coverage
 ## Features
 
 - **Guard clearing**: Automatically unsets `CLAUDECODE` before spawning child processes
+- **Permission bypass**: `--dangerously-skip-permissions` by default for headless autonomous execution
+- **Run profiles**: `PLAIN` (bare CC, no .claude/ config) vs `ENHANCED` (with skills, rules, CLAUDE.md) for controlled A/B comparison
 - **stream-json parsing**: Parses CC stream-json output into a typed `RunResult` Pydantic model
 - **Teams support**: Activates `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1` for parallel agent orchestration in subprocesses
 - **Timeout and budget limits**: Terminates subprocesses cleanly when wall-clock or cost thresholds are exceeded
 - **Env var filtering**: Passes only an explicit allowlist of env vars to child processes to prevent credential leakage
-- **Session artifact parsing**: Extracts tool_use blocks, subagent trees, and task DAGs from `~/.claude` JSONL files
+- **Session artifact parsing**: Extracts tool_use blocks, subagent trees, and task DAGs from `~/.claude` JSONL files (planned)
 
 ## Environment Variable Reference
 
@@ -63,9 +70,26 @@ make validate      # lint + type_check + test_coverage
 | `CLAUDE_CODE_DISABLE_1M_CONTEXT` | Prevents CC from using 1M-token context window in the subprocess. Reduces cost for small tasks. | unset |
 | `CLAUDE_CODE_EFFORT_LEVEL` | Controls reasoning effort in the subprocess (`low`, `medium`, `high`). | `high` |
 
+## Recurring Execution
+
+CC's `/loop` command schedules recurring prompts but is **interactive-only** — incompatible with `-p` (print mode). Since this harness uses `claude -p`, `/loop` cannot work here.
+
+Alternatives for headless recurring execution:
+
+```bash
+# Shell loop — run every 5 minutes
+while true; do
+  scripts/cc-recursive-team.sh --prompt "Run make test" --timeout 60
+  sleep 300
+done
+
+# Ralph loop — autonomous task execution with state tracking
+make ralph_run ITERATIONS=10
+```
+
 ## Status
 
-**Phase 1 — Shell script + Python wrapper + models.** Core functionality implemented with TDD (27 tests, 96% coverage). Artifact parser deferred to Phase 2.
+**Phase 1 complete.** Core functionality: models, runner, shell script, run profiles (plain/enhanced), `--dangerously-skip-permissions`. TDD test suite with 37+ tests.
 
 See [docs/TODO.md](docs/TODO.md) for the full task breakdown.
 

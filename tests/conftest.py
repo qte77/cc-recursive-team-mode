@@ -10,7 +10,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from cc_recursive.models import RunConfig
+from cc_recursive.models import RunConfig, RunProfile
 
 SAMPLE_STREAM_JSON_LINES = [
     json.dumps({"type": "system", "subtype": "init", "session_id": "sess-abc123"}),
@@ -43,6 +43,18 @@ def sample_config():
 def sample_config_teams():
     """RunConfig with teams=True for teams-mode tests."""
     return RunConfig(prompt="Analyze src/.", teams=True)
+
+
+@pytest.fixture
+def sample_config_enhanced():
+    """RunConfig with ENHANCED profile."""
+    return RunConfig(prompt="Analyze src/.", profile=RunProfile.ENHANCED)
+
+
+@pytest.fixture
+def sample_config_no_skip():
+    """RunConfig with skip_permissions=False."""
+    return RunConfig(prompt="Summarize this repo.", skip_permissions=False)
 
 
 @pytest.fixture

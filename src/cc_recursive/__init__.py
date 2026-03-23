@@ -6,8 +6,8 @@ Public API:
     RunResult: Output result model.
 """
 
-from cc_recursive.models import RunConfig, RunResult
+from cc_recursive.models import RunConfig, RunProfile, RunResult
 from cc_recursive.runner import run
 
-__all__ = ["run", "RunConfig", "RunResult"]
+__all__ = ["run", "RunConfig", "RunProfile", "RunResult"]
 __version__ = "0.1.0"

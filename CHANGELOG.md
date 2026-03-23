@@ -17,3 +17,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Hypothesis property tests for model field invariants
 - Project scaffold: pyproject.toml, Makefile, devcontainer, GitHub templates
 - LICENSE.md (MIT), SECURITY.md
+- `RunProfile` enum: `PLAIN` (bare CC) vs `ENHANCED` (with .claude/ config)
+- `skip_permissions` field (default True) — passes `--dangerously-skip-permissions`
+- Profile-based `--config-dir /dev/null` injection for PLAIN mode
+- Shell script `--no-skip-permissions` flag
+- "Recurring Execution" README section documenting `/loop` limitation

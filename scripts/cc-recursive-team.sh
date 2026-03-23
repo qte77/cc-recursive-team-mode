@@ -13,6 +13,7 @@
 #   --max-turns N         --max-turns flag value (default: 20)
 #   --teams               Enable CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1
 #   --output-format FMT   CC output format (default: stream-json)
+#   --no-skip-permissions  Do NOT pass --dangerously-skip-permissions (default: on)
 
 set -euo pipefail
 
@@ -20,6 +21,7 @@ PROMPT=""
 TIMEOUT=300
 MAX_TURNS=20
 TEAMS=false
+SKIP_PERMISSIONS=true
 OUTPUT_FORMAT="stream-json"
 
 while [[ $# -gt 0 ]]; do
@@ -29,6 +31,7 @@ while [[ $# -gt 0 ]]; do
         --max-turns)    MAX_TURNS="$2";     shift 2 ;;
         --teams)        TEAMS=true;         shift   ;;
         --output-format) OUTPUT_FORMAT="$2"; shift 2 ;;
+        --no-skip-permissions) SKIP_PERMISSIONS=false; shift ;;
         *) echo "Unknown flag: $1" >&2; exit 1 ;;
     esac
 done
@@ -45,6 +48,10 @@ if [[ "$TEAMS" == "true" ]]; then
     export CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1
 fi
 
-exec timeout "$TIMEOUT" claude -p "$PROMPT" \
-    --output-format "$OUTPUT_FORMAT" \
-    --max-turns "$MAX_TURNS"
+CMD=(timeout "$TIMEOUT" claude)
+if [[ "$SKIP_PERMISSIONS" == "true" ]]; then
+    CMD+=(--dangerously-skip-permissions)
+fi
+CMD+=(-p "$PROMPT" --output-format "$OUTPUT_FORMAT" --max-turns "$MAX_TURNS")
+
+exec "${CMD[@]}"

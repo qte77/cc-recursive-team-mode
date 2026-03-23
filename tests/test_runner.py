@@ -93,6 +93,56 @@ class TestRunSubprocessArgs:
         assert mock_run.call_args[1].get("timeout") == sample_config.timeout
 
 
+class TestRunPermissionsFlag:
+    """run() handles --dangerously-skip-permissions flag."""
+
+    def test_run_includes_skip_permissions_flag(self, sample_config, mock_subprocess_success):
+        """Given skip_permissions=True (default), cmd should contain --dangerously-skip-permissions."""
+        with patch(
+            "cc_recursive.runner.subprocess.run", return_value=mock_subprocess_success
+        ) as mock_run:
+            run(sample_config)
+        cmd = mock_run.call_args[0][0]
+        assert "--dangerously-skip-permissions" in cmd
+
+    def test_run_excludes_skip_permissions_when_disabled(
+        self, sample_config_no_skip, mock_subprocess_success
+    ):
+        """Given skip_permissions=False, cmd should NOT contain --dangerously-skip-permissions."""
+        with patch(
+            "cc_recursive.runner.subprocess.run", return_value=mock_subprocess_success
+        ) as mock_run:
+            run(sample_config_no_skip)
+        cmd = mock_run.call_args[0][0]
+        assert "--dangerously-skip-permissions" not in cmd
+
+
+class TestRunProfileConfigDir:
+    """run() injects --config-dir based on profile."""
+
+    def test_run_plain_profile_passes_null_config_dir(self, sample_config, mock_subprocess_success):
+        """Given PLAIN profile (default), cmd should contain --config-dir /dev/null."""
+        with patch(
+            "cc_recursive.runner.subprocess.run", return_value=mock_subprocess_success
+        ) as mock_run:
+            run(sample_config)
+        cmd = mock_run.call_args[0][0]
+        assert "--config-dir" in cmd
+        config_dir_idx = cmd.index("--config-dir")
+        assert cmd[config_dir_idx + 1] == "/dev/null"
+
+    def test_run_enhanced_profile_no_config_dir_flag(
+        self, sample_config_enhanced, mock_subprocess_success
+    ):
+        """Given ENHANCED profile, cmd should NOT contain --config-dir."""
+        with patch(
+            "cc_recursive.runner.subprocess.run", return_value=mock_subprocess_success
+        ) as mock_run:
+            run(sample_config_enhanced)
+        cmd = mock_run.call_args[0][0]
+        assert "--config-dir" not in cmd
+
+
 class TestRunOutputParsing:
     """run() parses stream-json stdout into RunResult fields."""
 

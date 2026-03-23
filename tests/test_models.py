@@ -8,7 +8,7 @@ from hypothesis import given
 from hypothesis import strategies as st
 from pydantic import ValidationError
 
-from cc_recursive.models import RunConfig, RunResult
+from cc_recursive.models import RunConfig, RunProfile, RunResult
 
 
 class TestRunConfigDefaults:
@@ -89,6 +89,42 @@ class TestRunResultConstruction:
             exit_code=1, duration_s=5.0, tokens=100, cost_usd=0.001, tool_calls=[], raw_output=""
         )
         assert result.exit_code == 1
+
+
+class TestRunProfile:
+    """RunProfile enum values."""
+
+    def test_run_profile_plain_value(self):
+        """PLAIN profile should equal 'plain'."""
+        assert RunProfile.PLAIN == "plain"
+
+    def test_run_profile_enhanced_value(self):
+        """ENHANCED profile should equal 'enhanced'."""
+        assert RunProfile.ENHANCED == "enhanced"
+
+
+class TestRunConfigProfileAndPermissions:
+    """RunConfig profile and skip_permissions fields."""
+
+    def test_run_config_skip_permissions_default_true(self):
+        """Default skip_permissions should be True (headless use case)."""
+        config = RunConfig(prompt="test")
+        assert config.skip_permissions is True
+
+    def test_run_config_profile_default_plain(self):
+        """Default profile should be PLAIN."""
+        config = RunConfig(prompt="test")
+        assert config.profile == RunProfile.PLAIN
+
+    def test_run_config_enhanced_profile(self):
+        """Can set profile to ENHANCED."""
+        config = RunConfig(prompt="test", profile=RunProfile.ENHANCED)
+        assert config.profile == RunProfile.ENHANCED
+
+    def test_run_config_skip_permissions_false(self):
+        """Can disable skip_permissions."""
+        config = RunConfig(prompt="test", skip_permissions=False)
+        assert config.skip_permissions is False
 
 
 class TestRunConfigHypothesis:

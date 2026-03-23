@@ -27,3 +27,8 @@ class TestShellScriptExists:
         first_line = SCRIPT_PATH.read_text().splitlines()[0]
         assert first_line.startswith("#!/"), f"No shebang found: {first_line!r}"
         assert "bash" in first_line, f"Non-bash shebang: {first_line!r}"
+
+    def test_script_contains_skip_permissions(self):
+        """Script should reference --dangerously-skip-permissions."""
+        content = SCRIPT_PATH.read_text()
+        assert "dangerously-skip-permissions" in content

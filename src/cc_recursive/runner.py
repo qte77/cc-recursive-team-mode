@@ -19,7 +19,7 @@ import subprocess
 import time
 from typing import Any
 
-from cc_recursive.models import RunConfig, RunResult
+from cc_recursive.models import RunConfig, RunProfile, RunResult
 
 # Reason: Allowlist prevents credential and token leakage.
 # Only these vars are passed to the child claude process.
@@ -105,15 +105,13 @@ def run(config: RunConfig) -> RunResult:
     Returns:
         RunResult with exit_code, duration_s, tokens, cost_usd, tool_calls, raw_output.
     """
-    cmd = [
-        "claude",
-        "-p",
-        config.prompt,
-        "--output-format",
-        config.output_format,
-        "--max-turns",
-        str(config.max_turns),
-    ]
+    cmd = ["claude"]
+    if config.skip_permissions:
+        cmd.append("--dangerously-skip-permissions")
+    cmd.extend(["-p", config.prompt, "--output-format", config.output_format])
+    cmd.extend(["--max-turns", str(config.max_turns)])
+    if config.profile == RunProfile.PLAIN:
+        cmd.extend(["--config-dir", "/dev/null"])
     env = _build_env(config)
 
     start = time.perf_counter()
