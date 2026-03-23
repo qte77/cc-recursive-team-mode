@@ -43,7 +43,7 @@ print(f"tools: {result.tool_calls}")
 
 ```bash
 make setup_dev     # Install deps (uv + all groups)
-make test          # Run all tests (27 tests, 96% coverage)
+make test          # Run all tests (38 tests, 97% coverage)
 make validate      # lint + type_check + test_coverage
 ```
 
@@ -54,7 +54,7 @@ make validate      # lint + type_check + test_coverage
 - **Run profiles**: `PLAIN` (bare CC, no .claude/ config) vs `ENHANCED` (with skills, rules, CLAUDE.md) for controlled A/B comparison
 - **stream-json parsing**: Parses CC stream-json output into a typed `RunResult` Pydantic model
 - **Teams support**: Activates `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1` for parallel agent orchestration in subprocesses
-- **Timeout and budget limits**: Terminates subprocesses cleanly when wall-clock or cost thresholds are exceeded
+- **Timeout handling**: Terminates subprocesses cleanly when wall-clock timeout is exceeded (exit code 124)
 - **Env var filtering**: Passes only an explicit allowlist of env vars to child processes to prevent credential leakage
 - **Session artifact parsing**: Extracts tool_use blocks, subagent trees, and task DAGs from `~/.claude` JSONL files (planned)
 
@@ -70,22 +70,9 @@ make validate      # lint + type_check + test_coverage
 | `CLAUDE_CODE_DISABLE_1M_CONTEXT` | Prevents CC from using 1M-token context window in the subprocess. Reduces cost for small tasks. | unset |
 | `CLAUDE_CODE_EFFORT_LEVEL` | Controls reasoning effort in the subprocess (`low`, `medium`, `high`). | `high` |
 
-## Recurring Execution
+## Note on `/loop`
 
-CC's `/loop` command schedules recurring prompts but is **interactive-only** — incompatible with `-p` (print mode). Since this harness uses `claude -p`, `/loop` cannot work here.
-
-Alternatives for headless recurring execution:
-
-```bash
-# Shell loop — run every 5 minutes
-while true; do
-  scripts/cc-recursive-team.sh --prompt "Run make test" --timeout 60
-  sleep 300
-done
-
-# Ralph loop — autonomous task execution with state tracking
-make ralph_run ITERATIONS=10
-```
+CC's `/loop` command accepts syntax in `-p` mode but does not persist — the session exits after the first iteration, killing the cron scheduler. `/loop` requires a persistent interactive session for recurring execution.
 
 ## Status
 

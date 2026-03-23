@@ -19,7 +19,7 @@ version: 1.0.0
 - [x] Pydantic models: `src/cc_recursive/models.py` — `RunConfig` and `RunResult` with field validation
 - [x] Python wrapper: `src/cc_recursive/runner.py` — env allowlist, stream-json parsing, timeout (exit 124)
 - [x] Public API: `src/cc_recursive/__init__.py` — exports `run`, `RunConfig`, `RunResult`
-- [x] TDD test suite: 27 tests (96% coverage), Hypothesis property tests
+- [x] TDD test suite: 38 tests (97% coverage), Hypothesis property tests
 - [x] `RunProfile` enum: PLAIN (bare CC) vs ENHANCED (with .claude/ config)
 - [x] `skip_permissions` field + `--dangerously-skip-permissions` support
 - [x] Shell script `--no-skip-permissions` flag
