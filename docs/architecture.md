@@ -35,7 +35,7 @@ Provides a `run()` function that invokes the shell primitive via `subprocess.run
 
 Responsibilities:
 
-- Build the subprocess env from an explicit allowlist (prevents credential leakage)
+- Build the subprocess env via denylist (inherit parent env minus CLAUDECODE)
 - Enforce `timeout` limit (exit code 124 on breach); `max_budget` modeled but not yet enforced
 - Parse stream-json lines from stdout into `RunResult`
 - Expose a synchronous `run(config: RunConfig) -> RunResult` interface
