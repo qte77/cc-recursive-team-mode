@@ -90,3 +90,55 @@ class TestRealClaudeInvocation:
         )
         result = run(config)
         assert result.exit_code == 124
+
+
+class TestRealCodingTasks:
+    """Integration tests with real coding tasks that exercise CC tool use."""
+
+    def test_run_solo_validate(self):
+        """Solo CC should run make validate and use Bash tool."""
+        config = RunConfig(
+            prompt=load_prompt("validate_repo", prompts_dir=_TESTS_PROMPTS_DIR),
+            timeout=300.0,
+            max_turns=5,
+        )
+        result = run(config)
+        assert result.exit_code == 0
+        assert result.tokens > 0
+        assert len(result.tool_calls) > 0
+
+    def test_run_solo_review(self):
+        """Solo CC should read runner.py and use Read tool."""
+        config = RunConfig(
+            prompt=load_prompt("review_runner", prompts_dir=_TESTS_PROMPTS_DIR),
+            timeout=300.0,
+            max_turns=3,
+        )
+        result = run(config)
+        assert result.exit_code == 0
+        assert result.tokens > 0
+        assert len(result.tool_calls) > 0
+
+    def test_run_teams_validate(self):
+        """Teams CC should run make validate with parallel agents."""
+        config = RunConfig(
+            prompt=load_prompt("validate_repo", prompts_dir=_TESTS_PROMPTS_DIR),
+            timeout=300.0,
+            max_turns=5,
+            teams=True,
+        )
+        result = run(config)
+        assert result.exit_code == 0
+        assert result.tokens > 0
+
+    def test_run_teams_review(self):
+        """Teams CC should review runner.py with parallel agents."""
+        config = RunConfig(
+            prompt=load_prompt("review_runner", prompts_dir=_TESTS_PROMPTS_DIR),
+            timeout=300.0,
+            max_turns=3,
+            teams=True,
+        )
+        result = run(config)
+        assert result.exit_code == 0
+        assert result.tokens > 0
