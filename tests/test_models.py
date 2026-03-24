@@ -4,7 +4,6 @@ Mock strategy: None — pure Pydantic model tests, no external I/O.
 """
 
 import os
-from pathlib import Path
 
 import pytest
 from hypothesis import given
@@ -157,17 +156,17 @@ class TestToolUseEvent:
 class TestSubagentNode:
     """SubagentNode recursive tree structure."""
 
-    def test_subagent_node_recursive(self):
+    def test_subagent_node_recursive(self, tmp_path):
         """SubagentNode can contain children."""
         child = SubagentNode(
             session_id="child-uuid",
-            jsonl_path=Path("/tmp/child.jsonl"),
+            jsonl_path=tmp_path / "child.jsonl",
             tool_uses=[],
             children=[],
         )
         parent = SubagentNode(
             session_id="parent-uuid",
-            jsonl_path=Path("/tmp/parent.jsonl"),
+            jsonl_path=tmp_path / "parent.jsonl",
             tool_uses=[],
             children=[child],
         )
@@ -178,11 +177,11 @@ class TestSubagentNode:
 class TestSessionArtifacts:
     """SessionArtifacts computed fields."""
 
-    def test_total_tool_calls_includes_subagents(self):
+    def test_total_tool_calls_includes_subagents(self, tmp_path):
         """total_tool_calls should count self + all subagent tool_uses recursively."""
         child = SubagentNode(
             session_id="child",
-            jsonl_path=Path("/tmp/c.jsonl"),
+            jsonl_path=tmp_path / "c.jsonl",
             tool_uses=[
                 ToolUseEvent(name="Bash", tool_use_id="t2", input={}, timestamp="t"),
             ],
@@ -190,7 +189,7 @@ class TestSessionArtifacts:
         )
         artifacts = SessionArtifacts(
             session_id="main",
-            jsonl_path=Path("/tmp/m.jsonl"),
+            jsonl_path=tmp_path / "m.jsonl",
             tool_uses=[
                 ToolUseEvent(name="Read", tool_use_id="t1", input={}, timestamp="t"),
             ],
