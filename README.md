@@ -56,8 +56,71 @@ make validate          # lint + type_check + test_coverage
 - **stream-json parsing**: Parses CC stream-json output into a typed `RunResult` Pydantic model
 - **Teams support**: Activates `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1` for parallel agent orchestration in subprocesses
 - **Timeout handling**: Terminates subprocesses cleanly when wall-clock timeout is exceeded (exit code 124)
-- **Env var filtering**: Passes only an explicit allowlist of env vars to child processes to prevent credential leakage
+- **Env denylist**: Child inherits parent env minus `CLAUDECODE` — safe for same-privilege subprocess
 - **Session artifact parsing**: Extracts tool_use blocks and reconstructs subagent trees from `~/.claude` JSONL files
+
+## Use Cases
+
+### 1. Self-validate recursively
+
+CC invokes itself to run `make validate` on this repo — the harness proves itself.
+
+```python
+from cc_recursive import run, RunConfig
+
+result = run(RunConfig(prompt="Run make validate and report results", timeout=300))
+print(f"exit={result.exit_code} cost=${result.cost_usd:.4f} tools={result.tool_calls}")
+```
+
+### 2. A/B compare plain vs enhanced CC
+
+Run the same prompt with and without project config to measure scaffolding impact.
+
+```python
+from cc_recursive import run, RunConfig, RunProfile
+
+plain = run(RunConfig(prompt="Fix the lint error in src/", profile=RunProfile.PLAIN))
+enhanced = run(RunConfig(prompt="Fix the lint error in src/", profile=RunProfile.ENHANCED))
+print(f"PLAIN: tokens={plain.tokens} cost=${plain.cost_usd:.4f}")
+print(f"ENHANCED: tokens={enhanced.tokens} cost=${enhanced.cost_usd:.4f}")
+```
+
+### 3. Teams mode benchmark
+
+Compare solo vs teams CC on the same task.
+
+```python
+from cc_recursive import run, RunConfig
+
+solo = run(RunConfig(prompt="Add tests for runner.py", timeout=120))
+teams = run(RunConfig(prompt="Add tests for runner.py", timeout=120, teams=True))
+print(f"Solo: {solo.tokens} tokens, ${solo.cost_usd:.4f}")
+print(f"Teams: {teams.tokens} tokens, ${teams.cost_usd:.4f}")
+```
+
+### 4. Parse session artifacts after a run
+
+Extract tool usage and subagent trees from CC session files.
+
+```python
+from pathlib import Path
+from cc_recursive import parse_session
+
+artifacts = parse_session(Path("~/.claude/projects/-my-project/session.jsonl").expanduser())
+print(f"Tools: {[t.name for t in artifacts.tool_uses]}")
+print(f"Subagents: {len(artifacts.subagents)}")
+print(f"Total calls: {artifacts.total_tool_calls}")
+```
+
+### 5. Shell — headless batch execution
+
+```bash
+# Solo, plain, 5 turns max
+scripts/cc-recursive-team.sh --prompt "Summarize README.md" --max-turns 5
+
+# Teams mode, no permission bypass
+scripts/cc-recursive-team.sh --prompt "Review src/" --teams --no-skip-permissions
+```
 
 ## Environment Variable Reference
 

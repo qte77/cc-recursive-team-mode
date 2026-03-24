@@ -10,16 +10,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - `RunConfig` and `RunResult` Pydantic models with field validation
-- `run()` Python wrapper — subprocess invocation with env allowlist, stream-json parsing, timeout handling (exit code 124)
+- `run()` Python wrapper — subprocess invocation with env denylist, stream-json parsing, timeout handling (exit code 124)
 - `scripts/cc-recursive-team.sh` — shell primitive with `--prompt`, `--timeout`, `--max-turns`, `--teams`, `--output-format` flags
 - Public API: `from cc_recursive import run, RunConfig, RunResult`
-- TDD test suite: 38 tests (17 model, 17 runner, 4 shell script), 97% coverage
+- TDD test suite: 54 unit + 7 integration tests, 95% coverage
 - Hypothesis property tests for model field invariants
 - Project scaffold: pyproject.toml, Makefile, devcontainer, GitHub templates
 - LICENSE.md (MIT), SECURITY.md
 - `RunProfile` enum: `PLAIN` (bare CC) vs `ENHANCED` (with .claude/ config)
 - `skip_permissions` field (default True) — passes `--dangerously-skip-permissions`
-- Profile-based `--config-dir /dev/null` injection for PLAIN mode
 - Shell script `--no-skip-permissions` flag
 - `/loop` note: accepts syntax in `-p` but session exits after first iteration
 - `artifact_parser.py` — session JSONL extraction, subagent tree reconstruction
