@@ -33,9 +33,15 @@ version: 1.0.0
 - [x] Env denylist (replaced allowlist) — child inherits full parent env minus CLAUDECODE
 - [x] `--verbose` auto-added for stream-json in `-p` mode
 
+- [x] Teams mode integration tests: solo + teams on `make validate` and code review
+- [x] `RunSettings(BaseSettings)` with `CC_` env prefix (pydantic-settings)
+- [x] Prompt catalog: `prompts/` dir with `load_prompt()` loader
+- [x] `CC_BINARY` env var for custom claude CLI path
+- [x] Depth-2 recursive spawning proven (CC→CC→CC with teams, sandbox-blocked at depth 2)
+
 ## Next
 
-- [ ] Teams mode integration test (real `claude -p` with `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1`)
+- [ ] Depth-2+ recursive spawning: sandbox blocks `~/.claude/session-env/` creation at depth 2 (EROFS). See [#6](https://github.com/qte77/cc-recursive-team-mode/issues/6)
 
 ## Backlog
 

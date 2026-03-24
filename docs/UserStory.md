@@ -48,5 +48,4 @@ Enable recursive CC spawning with structured output capture, so developers can b
 
 - Claude Agent SDK integration (Phase 2)
 - GUI or web interface
-- Multi-hop recursive spawning (CC spawning CC spawning CC)
 - Modifying CC's internal guard mechanism

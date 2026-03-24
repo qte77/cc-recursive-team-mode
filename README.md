@@ -164,7 +164,7 @@ CC's `/loop` command accepts syntax in `-p` mode but does not persist — the se
 
 ## Status
 
-**Phase 5 complete.** Models, runner, profiles, artifact parser, CI, integration tests, pydantic-settings, prompt catalog. 71 unit + 7 integration tests, 96% coverage.
+**Phase 5 complete.** Models, runner, profiles, artifact parser, CI, integration tests (solo + teams on real coding tasks), pydantic-settings, prompt catalog. 71 unit + 11 integration tests, 96% coverage.
 
 See [docs/TODO.md](docs/TODO.md) for the full task breakdown.
 
