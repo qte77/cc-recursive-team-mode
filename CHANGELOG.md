@@ -30,6 +30,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Env denylist approach (replaced allowlist) — child claude inherits full parent env minus CLAUDECODE
 - `--verbose` flag auto-added when `output_format == "stream-json"` (required by CC in `-p` mode)
 
+- `RunSettings(BaseSettings)` — env-var-driven config with `CC_` prefix (pydantic-settings)
+- `RunConfig` inherits `RunSettings` — backward-compatible, env vars override defaults
+- `CC_BINARY` env var for custom claude CLI path (default: `"claude"`)
+- Prompt catalog: `prompts/` dir with `load_prompt()` loader — no hardcoded prompts in code
+- `prompts/validate.txt`, `prompts/review.txt`, `prompts/benchmark.txt`
+
 ### Changed
 
 - Profile PLAIN no longer uses `--config-dir` or `--bare` — profile distinction is caller-controlled via working directory content

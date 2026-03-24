@@ -10,6 +10,7 @@ requires-python = "==3.13.*"
 license = "mit"
 dependencies = [
     "pydantic>=2.12.5",
+    "pydantic-settings>=2.13.1",
 ]
 
 [build-system]

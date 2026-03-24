@@ -122,6 +122,30 @@ scripts/cc-recursive-team.sh --prompt "Summarize README.md" --max-turns 5
 scripts/cc-recursive-team.sh --prompt "Review src/" --teams --no-skip-permissions
 ```
 
+## Configuration via Environment Variables
+
+All `RunSettings` fields can be overridden via `CC_` prefixed env vars:
+
+```bash
+CC_TIMEOUT=60 CC_TEAMS=true CC_BINARY=/usr/local/bin/claude uv run python -c "
+from cc_recursive import RunConfig
+c = RunConfig(prompt='test')
+print(c.timeout, c.teams, c.binary)  # 60.0 True /usr/local/bin/claude
+"
+```
+
+## Prompt Catalog
+
+Prompts are plain text files in `prompts/`, loaded by name:
+
+```python
+from cc_recursive import load_prompt, run, RunConfig
+
+result = run(RunConfig(prompt=load_prompt("validate")))
+```
+
+Add new prompts by creating `.txt` files in `prompts/`.
+
 ## Environment Variable Reference
 
 | Variable | Purpose | Default |
@@ -140,7 +164,7 @@ CC's `/loop` command accepts syntax in `-p` mode but does not persist — the se
 
 ## Status
 
-**Phase 4 complete.** Models, runner, shell script, run profiles, artifact parser, CI, integration tests. 54 unit + 7 integration tests, 95% coverage.
+**Phase 5 complete.** Models, runner, profiles, artifact parser, CI, integration tests, pydantic-settings, prompt catalog. 71 unit + 7 integration tests, 96% coverage.
 
 See [docs/TODO.md](docs/TODO.md) for the full task breakdown.
 

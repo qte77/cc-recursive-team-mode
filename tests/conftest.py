@@ -6,11 +6,15 @@ subprocess.run is always mocked; no real claude invocations.
 
 import json
 import subprocess
+from pathlib import Path
 from unittest.mock import MagicMock
 
 import pytest
 
 from cc_recursive.models import RunConfig, RunProfile
+from cc_recursive.prompts import load_prompt
+
+_TESTS_PROMPTS_DIR = Path(__file__).parent / "prompts"
 
 SAMPLE_STREAM_JSON_LINES = [
     json.dumps({"type": "system", "subtype": "init", "session_id": "sess-abc123"}),
@@ -36,25 +40,25 @@ SAMPLE_STREAM_JSON_OUTPUT = "\n".join(SAMPLE_STREAM_JSON_LINES)
 @pytest.fixture
 def sample_config():
     """RunConfig with typical values for runner tests."""
-    return RunConfig(prompt="Summarize this repo.", timeout=60.0, max_turns=5)
+    return RunConfig(prompt=load_prompt("validate"), timeout=60.0, max_turns=5)
 
 
 @pytest.fixture
 def sample_config_teams():
     """RunConfig with teams=True for teams-mode tests."""
-    return RunConfig(prompt="Analyze src/.", teams=True)
+    return RunConfig(prompt=load_prompt("review"), teams=True)
 
 
 @pytest.fixture
 def sample_config_enhanced():
     """RunConfig with ENHANCED profile."""
-    return RunConfig(prompt="Analyze src/.", profile=RunProfile.ENHANCED)
+    return RunConfig(prompt=load_prompt("review"), profile=RunProfile.ENHANCED)
 
 
 @pytest.fixture
 def sample_config_no_skip():
     """RunConfig with skip_permissions=False."""
-    return RunConfig(prompt="Summarize this repo.", skip_permissions=False)
+    return RunConfig(prompt=load_prompt("validate"), skip_permissions=False)
 
 
 SAMPLE_SESSION_JSONL_LINES = [

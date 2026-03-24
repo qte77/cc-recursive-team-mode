@@ -14,6 +14,7 @@ from pathlib import Path
 from typing import Any
 
 from pydantic import BaseModel, Field
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class RunProfile(StrEnum):
@@ -28,19 +29,26 @@ class RunProfile(StrEnum):
     ENHANCED = "enhanced"
 
 
-class RunConfig(BaseModel):
-    """Input configuration for a CC subprocess run.
+class RunSettings(BaseSettings):
+    """Env-var-driven defaults for CC subprocess runs.
+
+    All fields can be overridden via environment variables with ``CC_`` prefix.
+    Example: ``CC_TIMEOUT=60`` sets timeout to 60 seconds.
 
     Attributes:
-        prompt: Prompt passed to claude -p. Required, non-empty.
+        binary: Path to the claude CLI binary.
         timeout: Wall-clock timeout in seconds.
         max_turns: --max-turns flag value for claude.
         max_budget: USD cost cap; None means unlimited.
         teams: Whether to enable CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS.
         output_format: CC --output-format flag value.
+        skip_permissions: Pass --dangerously-skip-permissions for headless execution.
+        profile: CC config profile: plain (bare) or enhanced (with .claude/).
     """
 
-    prompt: str = Field(..., min_length=1, description="Prompt passed to claude -p")
+    model_config = SettingsConfigDict(env_prefix="CC_")
+
+    binary: str = Field(default="claude", description="Path to claude CLI binary")
     timeout: float = Field(default=300.0, gt=0, description="Wall-clock timeout in seconds")
     max_turns: int = Field(default=20, ge=1, description="--max-turns flag value")
     max_budget: float | None = Field(
@@ -54,6 +62,21 @@ class RunConfig(BaseModel):
     profile: RunProfile = Field(
         default=RunProfile.PLAIN,
         description="CC config profile: plain (bare) or enhanced (with .claude/)",
+    )
+
+
+class RunConfig(RunSettings):
+    """Input configuration for a single CC subprocess run.
+
+    Inherits all env-var-driven defaults from RunSettings.
+    Adds prompt as a required runtime field (not env-configurable).
+
+    Attributes:
+        prompt: Prompt passed to claude -p. Required, non-empty.
+    """
+
+    prompt: str = Field(
+        default="", min_length=1, description="Prompt passed to claude -p (or CC_PROMPT env var)"
     )
 
 

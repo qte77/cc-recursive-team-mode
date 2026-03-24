@@ -10,10 +10,12 @@ Excluded from make test by default.
 """
 
 import shutil
+from pathlib import Path
 
 import pytest
 
 from cc_recursive.models import RunConfig, RunProfile
+from cc_recursive.prompts import load_prompt
 from cc_recursive.runner import run
 
 pytestmark = pytest.mark.integration
@@ -22,9 +24,11 @@ pytestmark = pytest.mark.integration
 if not shutil.which("claude"):
     pytest.skip("claude binary not found", allow_module_level=True)
 
+_TESTS_PROMPTS_DIR = Path(__file__).parent / "prompts"
+
 # Reason: Minimal config to keep cost low — 1 turn, short timeout, PLAIN profile
 CHEAP_CONFIG = RunConfig(
-    prompt="What is 2+2? Answer with just the number.",
+    prompt=load_prompt("cheap", prompts_dir=_TESTS_PROMPTS_DIR),
     timeout=60.0,
     max_turns=1,
 )
@@ -57,7 +61,7 @@ class TestRealClaudeInvocation:
     def test_run_plain_profile_works(self):
         """PLAIN profile (--config-dir /dev/null) should complete successfully."""
         config = RunConfig(
-            prompt="What is 2+2? Answer with just the number.",
+            prompt=load_prompt("cheap", prompts_dir=_TESTS_PROMPTS_DIR),
             timeout=60.0,
             max_turns=1,
             profile=RunProfile.PLAIN,
@@ -69,7 +73,7 @@ class TestRealClaudeInvocation:
         """ENHANCED profile should complete successfully."""
         # Reason: ENHANCED loads hooks/plugins/CLAUDE.md which adds startup time
         config = RunConfig(
-            prompt="What is 2+2? Answer with just the number.",
+            prompt=load_prompt("cheap", prompts_dir=_TESTS_PROMPTS_DIR),
             timeout=120.0,
             max_turns=1,
             profile=RunProfile.ENHANCED,
@@ -80,7 +84,7 @@ class TestRealClaudeInvocation:
     def test_run_timeout_enforced(self):
         """Very short timeout should produce exit_code=124."""
         config = RunConfig(
-            prompt="Write a 10000 word essay about the history of computing.",
+            prompt=load_prompt("timeout", prompts_dir=_TESTS_PROMPTS_DIR),
             timeout=0.001,
             max_turns=1,
         )
