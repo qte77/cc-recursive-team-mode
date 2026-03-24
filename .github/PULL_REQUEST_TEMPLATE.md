@@ -6,6 +6,8 @@ Closes <!-- #issue-number or N/A -->
 
 ## Type of Change
 
+<!-- Check all that apply. Commit type must match conventional commits: feat|fix|build|chore|ci|docs|style|refactor|perf|revert|test -->
+
 - [ ] `feat` — new feature
 - [ ] `fix` — bug fix
 - [ ] `docs` — documentation only
@@ -13,6 +15,9 @@ Closes <!-- #issue-number or N/A -->
 - [ ] `test` — test additions or fixes
 - [ ] `ci` — CI/CD changes
 - [ ] `build` — build system or dependency changes
+- [ ] `perf` — performance improvement
+- [ ] `style` — formatting, whitespace (no logic change)
+- [ ] `revert` — reverts a previous commit
 - [ ] `chore` — tooling, config, maintenance
 - [ ] **Breaking change** — add `!` after commit type
 
@@ -23,11 +28,10 @@ Closes <!-- #issue-number or N/A -->
 
 ## Testing
 
-- [ ] `make validate` passes (lint + type_check + test_coverage)
-- [ ] New tests added for new functionality
-- [ ] All existing tests still pass
+- [ ] Tests pass locally
+- [ ] CI workflows pass
 
 ## Security
 
 - [ ] No hardcoded secrets, API keys, or credentials
-- [ ] Env var allowlist reviewed if modified
+- [ ] No new injection vectors in workflow `run:` steps

@@ -8,8 +8,7 @@ assignees: ''
 
 **Have you checked the docs?**
 
-- [ ] [README.md](https://github.com/qte77/cc-recursive-team-mode/blob/main/README.md)
-- [ ] [docs/architecture.md](https://github.com/qte77/cc-recursive-team-mode/blob/main/docs/architecture.md)
+- [ ] README.md
 
 ## Question
 
