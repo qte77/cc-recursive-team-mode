@@ -11,18 +11,22 @@ from cc_recursive.models import (
     RunConfig,
     RunProfile,
     RunResult,
+    RunSettings,
     SessionArtifacts,
     SubagentNode,
     ToolUseEvent,
 )
+from cc_recursive.prompts import load_prompt
 from cc_recursive.runner import run
 
 __all__ = [
+    "load_prompt",
     "parse_session",
     "run",
     "RunConfig",
     "RunProfile",
     "RunResult",
+    "RunSettings",
     "SessionArtifacts",
     "SubagentNode",
     "ToolUseEvent",

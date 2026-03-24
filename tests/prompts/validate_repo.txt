@@ -1,0 +1,1 @@
+Run make validate on this repo and report pass or fail with a one-line summary.

@@ -3,7 +3,7 @@
 Mock strategy: None — pure Pydantic model tests, no external I/O.
 """
 
-from pathlib import Path
+import os
 
 import pytest
 from hypothesis import given
@@ -14,6 +14,7 @@ from cc_recursive.models import (
     RunConfig,
     RunProfile,
     RunResult,
+    RunSettings,
     SessionArtifacts,
     SubagentNode,
     ToolUseEvent,
@@ -155,17 +156,17 @@ class TestToolUseEvent:
 class TestSubagentNode:
     """SubagentNode recursive tree structure."""
 
-    def test_subagent_node_recursive(self):
+    def test_subagent_node_recursive(self, tmp_path):
         """SubagentNode can contain children."""
         child = SubagentNode(
             session_id="child-uuid",
-            jsonl_path=Path("/tmp/child.jsonl"),
+            jsonl_path=tmp_path / "child.jsonl",
             tool_uses=[],
             children=[],
         )
         parent = SubagentNode(
             session_id="parent-uuid",
-            jsonl_path=Path("/tmp/parent.jsonl"),
+            jsonl_path=tmp_path / "parent.jsonl",
             tool_uses=[],
             children=[child],
         )
@@ -176,11 +177,11 @@ class TestSubagentNode:
 class TestSessionArtifacts:
     """SessionArtifacts computed fields."""
 
-    def test_total_tool_calls_includes_subagents(self):
+    def test_total_tool_calls_includes_subagents(self, tmp_path):
         """total_tool_calls should count self + all subagent tool_uses recursively."""
         child = SubagentNode(
             session_id="child",
-            jsonl_path=Path("/tmp/c.jsonl"),
+            jsonl_path=tmp_path / "c.jsonl",
             tool_uses=[
                 ToolUseEvent(name="Bash", tool_use_id="t2", input={}, timestamp="t"),
             ],
@@ -188,7 +189,7 @@ class TestSessionArtifacts:
         )
         artifacts = SessionArtifacts(
             session_id="main",
-            jsonl_path=Path("/tmp/m.jsonl"),
+            jsonl_path=tmp_path / "m.jsonl",
             tool_uses=[
                 ToolUseEvent(name="Read", tool_use_id="t1", input={}, timestamp="t"),
             ],
@@ -196,6 +197,92 @@ class TestSessionArtifacts:
             total_tool_calls=2,
         )
         assert artifacts.total_tool_calls == 2
+
+
+class TestRunSettings:
+    """RunSettings loads defaults from env vars with CC_ prefix."""
+
+    def test_settings_defaults_without_env(self, monkeypatch):
+        """Without env vars, RunSettings has correct defaults."""
+        # Reason: Clear any CC_ vars that may exist in the test environment
+        for key in list(os.environ):
+            if key.startswith("CC_"):
+                monkeypatch.delenv(key, raising=False)
+        s = RunSettings()
+        assert s.binary == "claude"
+        assert s.timeout == 300.0
+        assert s.max_turns == 20
+        assert s.max_budget is None
+        assert s.teams is False
+        assert s.output_format == "stream-json"
+        assert s.skip_permissions is True
+        assert s.profile == RunProfile.PLAIN
+
+    def test_settings_timeout_from_env(self, monkeypatch):
+        """CC_TIMEOUT env var should override timeout default."""
+        monkeypatch.setenv("CC_TIMEOUT", "60")
+        assert RunSettings().timeout == 60.0
+
+    def test_settings_teams_from_env(self, monkeypatch):
+        """CC_TEAMS=true should set teams=True."""
+        monkeypatch.setenv("CC_TEAMS", "true")
+        assert RunSettings().teams is True
+
+    def test_settings_profile_from_env(self, monkeypatch):
+        """CC_PROFILE=enhanced should set profile=ENHANCED."""
+        monkeypatch.setenv("CC_PROFILE", "enhanced")
+        assert RunSettings().profile == RunProfile.ENHANCED
+
+    def test_settings_skip_permissions_from_env(self, monkeypatch):
+        """CC_SKIP_PERMISSIONS=false should set skip_permissions=False."""
+        monkeypatch.setenv("CC_SKIP_PERMISSIONS", "false")
+        assert RunSettings().skip_permissions is False
+
+    def test_settings_max_budget_from_env(self, monkeypatch):
+        """CC_MAX_BUDGET=5.0 should set max_budget=5.0."""
+        monkeypatch.setenv("CC_MAX_BUDGET", "5.0")
+        assert RunSettings().max_budget == 5.0
+
+    def test_settings_binary_from_env(self, monkeypatch):
+        """CC_BINARY should override claude binary path."""
+        monkeypatch.setenv("CC_BINARY", "/usr/local/bin/claude")
+        assert RunSettings().binary == "/usr/local/bin/claude"
+
+
+class TestRunConfigInheritsSettings:
+    """RunConfig inherits RunSettings defaults and env overrides."""
+
+    def test_config_inherits_defaults(self):
+        """RunConfig(prompt='x') should have same defaults as RunSettings()."""
+        c = RunConfig(prompt="x")
+        assert c.timeout == 300.0
+        assert c.binary == "claude"
+
+    def test_config_env_override_inherited(self, monkeypatch):
+        """CC_TIMEOUT env var should propagate to RunConfig."""
+        monkeypatch.setenv("CC_TIMEOUT", "60")
+        assert RunConfig(prompt="x").timeout == 60.0
+
+    def test_config_explicit_overrides_env(self, monkeypatch):
+        """Explicit kwarg should override env var."""
+        monkeypatch.setenv("CC_TIMEOUT", "60")
+        assert RunConfig(prompt="x", timeout=30).timeout == 30.0
+
+    def test_config_prompt_still_required(self):
+        """RunConfig without prompt should raise ValidationError."""
+        with pytest.raises(ValidationError):
+            RunConfig()  # type: ignore[call-arg]
+
+    def test_config_prompt_from_env(self, monkeypatch):
+        """CC_PROMPT env var can provide a default prompt."""
+        monkeypatch.setenv("CC_PROMPT", "default prompt")
+        c = RunConfig()  # type: ignore[call-arg]
+        assert c.prompt == "default prompt"
+
+    def test_config_prompt_explicit_overrides_env(self, monkeypatch):
+        """Explicit prompt kwarg overrides CC_PROMPT env var."""
+        monkeypatch.setenv("CC_PROMPT", "default")
+        assert RunConfig(prompt="explicit").prompt == "explicit"
 
 
 class TestRunConfigHypothesis:

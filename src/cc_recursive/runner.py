@@ -96,7 +96,7 @@ def run(config: RunConfig) -> RunResult:
     Returns:
         RunResult with exit_code, duration_s, tokens, cost_usd, tool_calls, raw_output.
     """
-    cmd = ["claude"]
+    cmd = [config.binary]
     if config.skip_permissions:
         cmd.append("--dangerously-skip-permissions")
     cmd.extend(["-p", config.prompt, "--output-format", config.output_format])
