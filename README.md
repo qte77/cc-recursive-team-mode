@@ -176,4 +176,4 @@ See [docs/TODO.md](docs/TODO.md) for the full task breakdown.
 
 ## License
 
-MIT
+Apache-2.0
