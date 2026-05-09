@@ -1,6 +1,6 @@
 ---
 name: Bug report
-about: Report a problem with the recursive CC harness
+about: Report a problem
 title: ''
 labels: bug
 assignees: ''
@@ -25,9 +25,8 @@ assignees: ''
 
 ## Environment
 
-- Python version:
-- Claude Code version:
-- OS:
+- OS/Runner:
+- Version:
 
 ## Additional Context
 
