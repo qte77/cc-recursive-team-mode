@@ -2,6 +2,8 @@
 
 > Recursive Claude Code subprocess spawning with CLAUDECODE guard management
 
+**Write-up:** the recursion primitive in an open agentic coding harness — [An Open Agentic Coding Harness](https://qte77.github.io/open-agentic-coding-harness/).
+
 ## Why
 
 Claude Code sets `CLAUDECODE=1` to prevent accidental recursive spawning. This is a safety guard — but it also blocks legitimate use cases: evaluation harnesses, agent orchestration pipelines, and automated benchmarks that need to invoke `claude -p` as a subprocess from within a CC session.
