@@ -172,7 +172,7 @@ See [docs/TODO.md](docs/TODO.md) for the full task breakdown.
 
 ## Related Repos
 
-- [coding-agent-eval](https://github.com/qte77/coding-agent-eval) — Evaluation framework for coding agents (PydanticAI-based MAS)
+- [coding-harness-eval](https://github.com/qte77/coding-harness-eval) — Evaluation framework for coding agents (PydanticAI-based MAS)
 - [multi-tasking-quality-benchmark](https://github.com/qte77/multi-tasking-quality-benchmark) — WakaTime + quality metrics correlation benchmark
 - [ai-agents-research](https://github.com/qte77/ai-agents-research) — Research notes and landscape analysis for coding agents
 
