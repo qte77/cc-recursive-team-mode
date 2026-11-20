@@ -42,4 +42,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (v7.0.1, v4.39.3) instead of the `v7` / `v4` tags.
 - CI workflow: `actions/checkout` and `actions/setup-python` pinned to full commit SHAs
   (v7.0.1, v7.1.0) instead of the `v7` tags, which point at the same commits today.
+- CI and CodeQL workflows hardened: checkouts no longer persist the token
+  (`persist-credentials: false`), `GITHUB_TOKEN` is read-only in CI and scoped per job in CodeQL, uv comes from
+  `astral-sh/setup-uv` (SHA-pinned, uv 0.13.7) instead of an unpinned `pip install uv`, and both jobs have a
+  timeout and a per-ref concurrency group that cancels superseded PR runs.
 - Profile PLAIN no longer uses `--config-dir` or `--bare` — profile distinction is caller-controlled via working directory content
