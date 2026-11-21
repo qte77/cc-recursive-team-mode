@@ -12,7 +12,8 @@ on:
 
 permissions: {}
 
-# One run per ref; a new push to a PR cancels the older run, other events finish.
+# One group per ref. A new PR run cancels the in-progress one; for other events the
+# in-progress run finishes, and GitHub keeps only the newest pending run per group.
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
@@ -23,7 +24,6 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     permissions:
-      actions: read  # from the CodeQL starter workflow (needed there for private repos)
       contents: read  # checkout
       security-events: write  # upload the SARIF results
     steps:

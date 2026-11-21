@@ -4,7 +4,7 @@
 .DEFAULT_GOAL := help
 
 setup_dev:  ## Install all dev dependencies
-	pip install uv -q
+	pip install uv==0.13.7 -q  # same uv as CI (ci.yaml setup-uv version)
 	uv sync --all-groups
 
 lint:  ## Format and lint with ruff

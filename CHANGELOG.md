@@ -46,4 +46,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (`persist-credentials: false`), `GITHUB_TOKEN` is read-only in CI and scoped per job in CodeQL, uv comes from
   `astral-sh/setup-uv` (SHA-pinned, uv 0.13.7) instead of an unpinned `pip install uv`, and both jobs have a
   timeout and a per-ref concurrency group that cancels superseded PR runs.
+- CI caches uv's downloads through `astral-sh/setup-uv` (its default cache); `make setup_dev` installs the
+  same uv as CI (`uv==0.13.7`), and the CodeQL job drops `actions: read`, which a public repo does not need.
 - Profile PLAIN no longer uses `--config-dir` or `--bare` — profile distinction is caller-controlled via working directory content
