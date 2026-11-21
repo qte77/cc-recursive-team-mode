@@ -28,7 +28,7 @@ Responsibilities:
 - Pass `--output-format stream-json` and `--max-turns` flags
 - Forward stdout to a capture file; stream stderr to the caller
 - Exit with the child process exit code
-- Spawn-depth guard: export `CC_RECURSIVE_DEPTH` = inherited depth + 1; exit 3 without starting claude past `--max-depth` (`CC_MAX_DEPTH`, default 2) or on a malformed depth
+- Spawn-depth guard: export `CC_RECURSIVE_DEPTH` = inherited depth + 1 and `CC_MAX_DEPTH` = the effective limit (`--max-depth` can lower an inherited limit, not raise it; default 2); exit 3 without starting claude past the limit or when a value is not 1-9 ASCII digits
 
 ### Python Wrapper: `src/cc_recursive/runner.py`
 
@@ -38,7 +38,7 @@ Responsibilities:
 
 - Build the subprocess env via denylist (inherit parent env minus CLAUDECODE)
 - Enforce `timeout` limit (exit code 124 on breach); `max_budget` modeled but not yet enforced
-- Enforce the spawn-depth guard with the same `CC_RECURSIVE_DEPTH` variable as the shell script (exit code 3, no subprocess, past `max_depth`)
+- Enforce the spawn-depth guard with the same variables and rules as the shell script (exit code 3, no subprocess); the guard is cooperative and relies on claude passing the variables to its tools' processes (unverified)
 - Parse stream-json lines from stdout into `RunResult`
 - Expose a synchronous `run(config: RunConfig) -> RunResult` interface
 
