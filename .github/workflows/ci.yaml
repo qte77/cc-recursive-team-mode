@@ -9,7 +9,8 @@ on:
 permissions:
   contents: read  # checkout only
 
-# One run per ref; a new push to a PR cancels the older run, pushes to main finish.
+# One group per ref. A new PR run cancels the in-progress one; for other events the
+# in-progress run finishes, and GitHub keeps only the newest pending run per group.
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
