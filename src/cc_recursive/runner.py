@@ -30,17 +30,37 @@ _CC_ENV_DENYLIST: frozenset[str] = frozenset({"CLAUDECODE"})
 
 _TIMEOUT_EXIT_CODE = 124  # Matches bash `timeout` command convention
 
+# Spawn-depth guard. Each spawn passes its depth to the child in this env var (absent = 0, the
+# top-level caller). scripts/cc-recursive-team.sh uses the same variable, so the count carries
+# across both entry points.
+DEPTH_ENV_VAR = "CC_RECURSIVE_DEPTH"
+# Returned, without starting claude, when a spawn would exceed max_depth or the inherited depth
+# is not a non-negative integer (fail closed). Distinct from 0/1 (claude) and 124 (timeout).
+DEPTH_EXCEEDED_EXIT_CODE = 3
 
-def _build_env(config: RunConfig) -> dict[str, str]:
+
+def _child_depth() -> int | None:
+    """Depth the child would run at, or None if the inherited depth is malformed."""
+    raw = os.environ.get(DEPTH_ENV_VAR)
+    if raw is None:
+        return 1
+    if not (raw.isascii() and raw.isdigit()):
+        return None
+    return int(raw) + 1
+
+
+def _build_env(config: RunConfig, depth: int) -> dict[str, str]:
     """Build the subprocess environment dict from config.
 
     Args:
         config: RunConfig controlling env construction.
+        depth: Spawn depth the child runs at.
 
     Returns:
         Clean env dict for the subprocess.
     """
     env: dict[str, str] = {k: v for k, v in os.environ.items() if k not in _CC_ENV_DENYLIST}
+    env[DEPTH_ENV_VAR] = str(depth)
     if config.teams:
         env["CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS"] = "1"
     else:
@@ -95,7 +115,20 @@ def run(config: RunConfig) -> RunResult:
 
     Returns:
         RunResult with exit_code, duration_s, tokens, cost_usd, tool_calls, raw_output.
+        exit_code is DEPTH_EXCEEDED_EXIT_CODE, and claude is not started, when the spawn would
+        go past config.max_depth.
     """
+    depth = _child_depth()
+    if depth is None or depth > config.max_depth:
+        return RunResult(
+            exit_code=DEPTH_EXCEEDED_EXIT_CODE,
+            duration_s=0.0,
+            tokens=0,
+            cost_usd=0.0,
+            tool_calls=[],
+            raw_output="",
+        )
+
     cmd = [config.binary]
     if config.skip_permissions:
         cmd.append("--dangerously-skip-permissions")
@@ -104,7 +137,7 @@ def run(config: RunConfig) -> RunResult:
     if config.output_format == "stream-json":
         cmd.append("--verbose")
     cmd.extend(["--max-turns", str(config.max_turns)])
-    env = _build_env(config)
+    env = _build_env(config, depth)
 
     start = time.perf_counter()
     try:

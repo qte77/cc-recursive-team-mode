@@ -58,6 +58,7 @@ make validate          # lint + type_check + test_coverage
 - **stream-json parsing**: Parses CC stream-json output into a typed `RunResult` Pydantic model
 - **Teams support**: Activates `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1` for parallel agent orchestration in subprocesses
 - **Timeout handling**: Terminates subprocesses cleanly when wall-clock timeout is exceeded (exit code 124)
+- **Spawn-depth guard**: Each spawn passes `CC_RECURSIVE_DEPTH` (its depth + 1; absent = 0) to the child, in both `run()` and the shell script. A spawn past `max_depth` (`CC_MAX_DEPTH`, `--max-depth`; default 2), or with a malformed inherited depth, exits **3** without starting claude
 - **Env denylist**: Child inherits parent env minus `CLAUDECODE` — safe for same-privilege subprocess
 - **Session artifact parsing**: Extracts tool_use blocks and reconstructs subagent trees from `~/.claude` JSONL files
 

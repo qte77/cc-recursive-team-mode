@@ -45,8 +45,8 @@ version: 1.0.0
 
 ## Backlog
 
-- [ ] Teams artifact validation: verify artifact collection works in teams mode
-- [ ] Depth control: detect and limit recursive spawn depth (guard against unbounded recursion)
+- [ ] Teams artifact validation: verify artifact collection works in teams mode. Finding (2026-11-21, read-only check of local `~/.claude` structure): team configs (`~/.claude/teams/<team>/config.json`) list members by name with no per-member session id, and no local transcript from a teams run with teammates survives, so where teammate transcripts land (and whether `parse_session` finds them under `<lead>/subagents/`) is unverified. Needs one real `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1` run with 2 teammates (costs money; owner gate)
+- [x] Depth control: detect and limit recursive spawn depth (guard against unbounded recursion) — `CC_RECURSIVE_DEPTH` + `max_depth` (default 2), exit code 3, in `run()` and the shell script
 - [ ] `max_budget` mid-stream enforcement (requires streaming subprocess output)
 
 ## Deferred

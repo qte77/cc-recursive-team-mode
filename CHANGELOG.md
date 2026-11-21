@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Spawn-depth guard: `run()` and `scripts/cc-recursive-team.sh` pass `CC_RECURSIVE_DEPTH` (depth + 1) to the child and refuse a spawn past `max_depth` (`RunConfig.max_depth`, `CC_MAX_DEPTH`, `--max-depth`; default 2) with **exit code 3**, without starting claude. A malformed inherited depth is refused the same way
+
 - `RunConfig` and `RunResult` Pydantic models with field validation
 - `run()` Python wrapper — subprocess invocation with env denylist, stream-json parsing, timeout handling (exit code 124)
 - `scripts/cc-recursive-team.sh` — shell primitive with `--prompt`, `--timeout`, `--max-turns`, `--teams`, `--output-format` flags
