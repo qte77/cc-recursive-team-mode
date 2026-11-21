@@ -16,6 +16,15 @@ from cc_recursive.prompts import load_prompt
 
 _TESTS_PROMPTS_DIR = Path(__file__).parent / "prompts"
 
+
+@pytest.fixture(autouse=True)
+def _no_inherited_spawn_depth(monkeypatch):
+    """Run every test as a top-level caller, even when the suite itself runs inside a spawned
+    agent that inherited CC_RECURSIVE_DEPTH / CC_MAX_DEPTH."""
+    monkeypatch.delenv("CC_RECURSIVE_DEPTH", raising=False)
+    monkeypatch.delenv("CC_MAX_DEPTH", raising=False)
+
+
 SAMPLE_STREAM_JSON_LINES = [
     json.dumps({"type": "system", "subtype": "init", "session_id": "sess-abc123"}),
     json.dumps(

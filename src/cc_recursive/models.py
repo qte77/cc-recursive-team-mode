@@ -44,6 +44,7 @@ class RunSettings(BaseSettings):
         output_format: CC --output-format flag value.
         skip_permissions: Pass --dangerously-skip-permissions for headless execution.
         profile: CC config profile: plain (bare) or enhanced (with .claude/).
+        max_depth: Deepest recursive spawn allowed (the top-level caller is depth 0).
     """
 
     model_config = SettingsConfigDict(env_prefix="CC_")
@@ -62,6 +63,11 @@ class RunSettings(BaseSettings):
     profile: RunProfile = Field(
         default=RunProfile.PLAIN,
         description="CC config profile: plain (bare) or enhanced (with .claude/)",
+    )
+    # Reason: depth 2 (CC -> CC -> CC) is the deepest level proven to work (docs/TODO.md);
+    # deeper spawns are refused instead of recursing without bound.
+    max_depth: int = Field(
+        default=2, ge=0, description="Deepest recursive spawn allowed (top-level caller = 0)"
     )
 
 

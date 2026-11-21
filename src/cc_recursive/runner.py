@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import subprocess
 import time
 from typing import Any
@@ -30,17 +31,53 @@ _CC_ENV_DENYLIST: frozenset[str] = frozenset({"CLAUDECODE"})
 
 _TIMEOUT_EXIT_CODE = 124  # Matches bash `timeout` command convention
 
+# Spawn-depth guard (cooperative: a process that unsets these variables, or calls claude
+# directly, is not counted). Each spawn passes its depth to the child in DEPTH_ENV_VAR (absent =
+# 0, the top-level caller) and its effective limit in MAX_DEPTH_ENV_VAR, so the limit binds the
+# whole tree: a nested caller can lower it but not raise it. scripts/cc-recursive-team.sh uses
+# the same variables and rules, so both entry points share one count.
+DEPTH_ENV_VAR = "CC_RECURSIVE_DEPTH"
+MAX_DEPTH_ENV_VAR = "CC_MAX_DEPTH"
+# Returned, without starting claude, when a spawn would exceed the limit or an inherited value is
+# malformed (fail closed). Distinct from 124 (timeout); claude itself is not known to exit 3.
+DEPTH_EXCEEDED_EXIT_CODE = 3
 
-def _build_env(config: RunConfig) -> dict[str, str]:
+# 1-9 ASCII digits: the same rule as the shell script (no sign, no spaces, no overflow).
+_COUNT = re.compile(r"[0123456789]{1,9}")
+
+
+def _env_count(name: str) -> int | None:
+    """The env var as a count; -1 when it is set but malformed, None when unset."""
+    raw = os.environ.get(name)
+    if raw is None:
+        return None
+    return int(raw) if _COUNT.fullmatch(raw) else -1
+
+
+def _depth_and_limit(config: RunConfig) -> tuple[int, int] | None:
+    """(child depth, effective limit), or None when an inherited value is malformed."""
+    inherited_depth = _env_count(DEPTH_ENV_VAR)
+    inherited_limit = _env_count(MAX_DEPTH_ENV_VAR)
+    if inherited_depth == -1 or inherited_limit == -1:
+        return None
+    limit = config.max_depth if inherited_limit is None else min(config.max_depth, inherited_limit)
+    return (inherited_depth or 0) + 1, limit
+
+
+def _build_env(config: RunConfig, depth: int, limit: int) -> dict[str, str]:
     """Build the subprocess environment dict from config.
 
     Args:
         config: RunConfig controlling env construction.
+        depth: Spawn depth the child runs at.
+        limit: Effective max depth, passed on so it binds the whole tree.
 
     Returns:
         Clean env dict for the subprocess.
     """
     env: dict[str, str] = {k: v for k, v in os.environ.items() if k not in _CC_ENV_DENYLIST}
+    env[DEPTH_ENV_VAR] = str(depth)
+    env[MAX_DEPTH_ENV_VAR] = str(limit)
     if config.teams:
         env["CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS"] = "1"
     else:
@@ -95,7 +132,21 @@ def run(config: RunConfig) -> RunResult:
 
     Returns:
         RunResult with exit_code, duration_s, tokens, cost_usd, tool_calls, raw_output.
+        exit_code is DEPTH_EXCEEDED_EXIT_CODE, and claude is not started, when the spawn would
+        go past the effective max depth (config.max_depth, lowered by an inherited CC_MAX_DEPTH)
+        or an inherited depth or limit is malformed.
     """
+    guard = _depth_and_limit(config)
+    if guard is None or guard[0] > guard[1]:
+        return RunResult(
+            exit_code=DEPTH_EXCEEDED_EXIT_CODE,
+            duration_s=0.0,
+            tokens=0,
+            cost_usd=0.0,
+            tool_calls=[],
+            raw_output="",
+        )
+
     cmd = [config.binary]
     if config.skip_permissions:
         cmd.append("--dangerously-skip-permissions")
@@ -104,7 +155,8 @@ def run(config: RunConfig) -> RunResult:
     if config.output_format == "stream-json":
         cmd.append("--verbose")
     cmd.extend(["--max-turns", str(config.max_turns)])
-    env = _build_env(config)
+    depth, limit = guard
+    env = _build_env(config, depth, limit)
 
     start = time.perf_counter()
     try:
