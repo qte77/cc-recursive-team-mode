@@ -5,6 +5,7 @@ subprocess.run is always mocked; no real claude invocations.
 """
 
 import json
+import os
 import subprocess
 from pathlib import Path
 from unittest.mock import MagicMock
@@ -162,6 +163,9 @@ def mock_claude_project_dir(tmp_path):
     # Newer session
     new = project_dir / "new-session-uuid.jsonl"
     new.write_text(SAMPLE_SESSION_JSONL)
+    # Reason: back-to-back writes can share one mtime tick; set them apart explicitly (#25)
+    now = new.stat().st_mtime
+    os.utime(old, (now - 10, now - 10))
 
     # Subagent for the newer session
     subagent_dir = project_dir / "new-session-uuid" / "subagents"

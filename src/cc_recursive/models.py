@@ -67,7 +67,11 @@ class RunSettings(BaseSettings):
     # Reason: depth 2 (CC -> CC -> CC) is the deepest level proven to work (docs/TODO.md);
     # deeper spawns are refused instead of recursing without bound.
     max_depth: int = Field(
-        default=2, ge=0, description="Deepest recursive spawn allowed (top-level caller = 0)"
+        default=2,
+        ge=0,
+        # Reason: the limit is passed on in CC_MAX_DEPTH, which children accept only as 1-9 digits
+        le=999_999_999,
+        description="Deepest recursive spawn allowed (top-level caller = 0)",
     )
 
 

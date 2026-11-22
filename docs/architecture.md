@@ -54,7 +54,7 @@ Responsibilities:
 | `max_budget` | `float \| None` | `None` | USD budget cap; None = unlimited |
 | `teams` | `bool` | `False` | Enable `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS` |
 | `output_format` | `str` | `"stream-json"` | CC output format flag |
-| `max_depth` | `int` | `2` | Deepest recursive spawn allowed (top-level caller = 0); env `CC_MAX_DEPTH` |
+| `max_depth` | `int` | `2` | Deepest recursive spawn allowed (top-level caller = 0), 0 to 999,999,999; env `CC_MAX_DEPTH` |
 
 `RunResult` — output from `run()`:
 
