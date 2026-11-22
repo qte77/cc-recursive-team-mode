@@ -10,7 +10,6 @@ Mock strategy: run() tests patch subprocess.run. The shell-script tests run the 
 stub `claude` on PATH that only prints the depth it received; no real claude calls.
 """
 
-import locale
 import os
 import subprocess
 from pathlib import Path
@@ -125,6 +124,12 @@ class TestRunDepthGuard:
             with pytest.raises(ValidationError):
                 RunConfig(prompt="hello")
 
+    def test_max_depth_is_capped_at_nine_digits(self):
+        """The limit is passed on in CC_MAX_DEPTH, which children accept only as 1-9 digits."""
+        assert RunConfig(prompt="hello", max_depth=999_999_999).max_depth == 999_999_999
+        with pytest.raises(ValidationError):
+            RunConfig(prompt="hello", max_depth=1_000_000_000)
+
     def test_exit_code_is_distinct_from_timeout(self):
         """The depth exit code must not collide with the timeout code (124) or success/error."""
         assert DEPTH_EXCEEDED_EXIT_CODE not in (0, 1, 124)
@@ -144,15 +149,21 @@ def stub_claude(tmp_path):
     return bin_dir
 
 
-def _utf8_locale() -> str | None:
-    """A UTF-8 locale under which [0-9] can match non-ASCII digits, or None if none is installed."""
+def _locale_where_range_matches_superscript() -> str | None:
+    """A locale under which bash's [0-9] matches U+00B2, or None if none is installed.
+
+    Only under such a locale can the non-ASCII test catch a [0-9] regression (C.UTF-8 does not
+    qualify, en_US.UTF-8 usually does), so the test skips instead of passing vacuously.
+    """
     for name in ("en_US.UTF-8", "en_US.utf8", "C.UTF-8"):
-        try:
-            locale.setlocale(locale.LC_CTYPE, name)
-        except locale.Error:
-            continue
-        locale.setlocale(locale.LC_CTYPE, "")
-        return name
+        probe = subprocess.run(
+            ["bash", "-c", '[[ "$1" =~ ^[0-9]$ ]]', "probe", "\u00b2"],
+            env={**os.environ, "LC_ALL": name},
+            capture_output=True,
+            check=False,
+        )
+        if probe.returncode == 0:
+            return name
     return None
 
 
@@ -202,10 +213,10 @@ class TestShellScriptDepthGuard:
         assert proc.stdout == ""
 
     def test_script_refuses_non_ascii_digits_in_a_utf8_locale(self, stub_claude):
-        """Under a UTF-8 locale a [0-9] range can match U+00B2; the script must still refuse it."""
-        name = _utf8_locale()
+        """Where a [0-9] range matches U+00B2, the script must still refuse it."""
+        name = _locale_where_range_matches_superscript()
         if name is None:
-            pytest.skip("no UTF-8 locale installed")
+            pytest.skip("no installed locale makes [0-9] match U+00B2")
         proc = _run_script(stub_claude, {DEPTH_ENV_VAR: "\u00b2", "LC_ALL": name})
         assert proc.returncode == DEPTH_EXCEEDED_EXIT_CODE
         assert proc.stdout == ""
@@ -234,3 +245,24 @@ class TestShellScriptDepthGuard:
     def test_script_fails_closed_on_malformed_limit(self, stub_claude):
         proc = _run_script(stub_claude, {"CC_MAX_DEPTH": "lots"})
         assert proc.returncode == DEPTH_EXCEEDED_EXIT_CODE
+
+    def test_script_refuses_an_empty_max_depth_flag(self, stub_claude):
+        """`--max-depth ""` is malformed, not "no flag"."""
+        proc = _run_script(stub_claude, {}, "--max-depth", "")
+        assert proc.returncode == DEPTH_EXCEEDED_EXIT_CODE
+        assert proc.stdout == ""
+
+    @pytest.mark.parametrize(
+        ("extra_env", "args"),
+        [
+            ({DEPTH_ENV_VAR: "\x1b[31mINJECTED"}, ()),
+            ({"CC_MAX_DEPTH": "\x1b[31mINJECTED"}, ()),
+            ({}, ("--max-depth", "\x1b[31mINJECTED")),
+        ],
+    )
+    def test_script_error_does_not_echo_a_malformed_value(self, stub_claude, extra_env, args):
+        """A malformed value may hold terminal control sequences; the error names only the input."""
+        proc = _run_script(stub_claude, extra_env, *args)
+        assert proc.returncode == DEPTH_EXCEEDED_EXIT_CODE
+        assert "\x1b" not in proc.stderr
+        assert "INJECTED" not in proc.stderr

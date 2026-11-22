@@ -39,6 +39,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Spawn-depth guard follow-ups from the #24 review: `max_depth` is capped at 999,999,999 (the
+  1-9 digit rule children apply to `CC_MAX_DEPTH`), the script refuses `--max-depth ""` instead of
+  treating it as no flag, and its error messages name the malformed input without echoing the
+  value. The non-ASCII digit test now skips unless the installed locale makes `[0-9]` match
+  U+00B2, instead of passing without testing anything. The `mock_claude_project_dir` fixture sets
+  file mtimes explicitly, so `test_finds_most_recent` no longer depends on write order (#25).
 - CodeQL workflow: `actions/checkout` and `github/codeql-action` pinned to full commit SHAs
   (v7.0.1, v4.39.3) instead of the `v7` / `v4` tags.
 - CI workflow: `actions/checkout` and `actions/setup-python` pinned to full commit SHAs

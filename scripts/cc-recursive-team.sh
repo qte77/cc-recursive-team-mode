@@ -32,6 +32,7 @@ TEAMS=false
 SKIP_PERMISSIONS=true
 OUTPUT_FORMAT="stream-json"
 MAX_DEPTH_FLAG=""
+MAX_DEPTH_GIVEN=""
 DEPTH_EXCEEDED_EXIT_CODE=3
 
 while [[ $# -gt 0 ]]; do
@@ -42,7 +43,7 @@ while [[ $# -gt 0 ]]; do
         --teams)        TEAMS=true;         shift   ;;
         --output-format) OUTPUT_FORMAT="$2"; shift 2 ;;
         --no-skip-permissions) SKIP_PERMISSIONS=false; shift ;;
-        --max-depth)    MAX_DEPTH_FLAG="$2"; shift 2 ;;
+        --max-depth)    MAX_DEPTH_FLAG="$2"; MAX_DEPTH_GIVEN=1; shift 2 ;;
         *) echo "Unknown flag: $1" >&2; exit 1 ;;
     esac
 done
@@ -58,16 +59,17 @@ is_count() { [[ "$1" =~ ^[0123456789]{1,9}$ ]]; }
 refuse() { echo "Error: $1" >&2; exit "$DEPTH_EXCEEDED_EXIT_CODE"; }
 
 DEPTH="${CC_RECURSIVE_DEPTH-0}"
-is_count "$DEPTH" || refuse "CC_RECURSIVE_DEPTH must be 1-9 digits, got '$DEPTH'"
-if [[ -n "$MAX_DEPTH_FLAG" ]]; then
-    is_count "$MAX_DEPTH_FLAG" || refuse "--max-depth must be 1-9 digits, got '$MAX_DEPTH_FLAG'"
+# Reason: messages never echo the value, which may hold terminal control sequences
+is_count "$DEPTH" || refuse "CC_RECURSIVE_DEPTH must be 1-9 ASCII digits"
+if [[ -n "$MAX_DEPTH_GIVEN" ]]; then
+    is_count "$MAX_DEPTH_FLAG" || refuse "--max-depth must be 1-9 ASCII digits"
     LIMIT=$((10#$MAX_DEPTH_FLAG))
 else
     LIMIT=2
 fi
 if [[ -n "${CC_MAX_DEPTH+set}" ]]; then
-    is_count "$CC_MAX_DEPTH" || refuse "CC_MAX_DEPTH must be 1-9 digits, got '$CC_MAX_DEPTH'"
-    if [[ -z "$MAX_DEPTH_FLAG" ]] || (( 10#$CC_MAX_DEPTH < LIMIT )); then
+    is_count "$CC_MAX_DEPTH" || refuse "CC_MAX_DEPTH must be 1-9 ASCII digits"
+    if [[ -z "$MAX_DEPTH_GIVEN" ]] || (( 10#$CC_MAX_DEPTH < LIMIT )); then
         LIMIT=$((10#$CC_MAX_DEPTH))
     fi
 fi
